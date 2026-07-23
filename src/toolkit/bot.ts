@@ -1,5 +1,6 @@
 import {
   Bot,
+  GrammyError,
   session,
   type Context,
   type SessionFlavor,
@@ -58,10 +59,32 @@ export function createBot<S extends object>(
   // are byte-for-byte unchanged. Records salted user hashes only; best-effort.
   installActivityReporter(bot, opts.telemetryEnv, opts.telemetryReporterOptions);
   bot.catch((err) => {
+    // Benign Bot-API 400s that are expected under normal use and must never
+    // surface as exceptions:
+    //   - "message is not modified": editing a message to identical content
+    //     (e.g. re-tapping the current screen's button).
+    //   - "query is too old ... or query ID is invalid": a stale callback query
+    //     the user tapped on an old message, or after the bot was briefly down.
+    // Handlers wrap answerCallbackQuery/editMessageText in try/catch, but this
+    // guard keeps the logs clean if anything slips through.
+    if (isBenignGrammyError(err)) return;
     if (opts.onError) opts.onError(err);
     else console.error("[agntdev-bot] unhandled error:", err);
   });
   return bot;
+}
+
+/** True for the two benign 400s above (checked on the BotError AND its cause). */
+function isBenignGrammyError(err: unknown): boolean {
+  const candidates: unknown[] = [err, (err as { error?: unknown })?.error];
+  for (const c of candidates) {
+    if (c instanceof GrammyError && c.error_code === 400) {
+      const d = (c.description ?? "").toLowerCase();
+      if (d.includes("message is not modified")) return true;
+      if (d.includes("query is too old") || d.includes("query id is invalid")) return true;
+    }
+  }
+  return false;
 }
 
 /**
