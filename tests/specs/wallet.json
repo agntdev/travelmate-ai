@@ -52,6 +52,31 @@
     ]
   },
   {
+    "name": "wallet:coupon redemption adds credit to balance",
+    "steps": [
+      {
+        "send": { "text": "/wallet" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "wallet:coupon" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "text": "WELCOME" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Coupon \"WELCOME\" redeemed! $2.00 has been added to your wallet.\n\nNew balance: $2.00" }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "name": "wallet:referral shows referral code",
     "steps": [
       {
