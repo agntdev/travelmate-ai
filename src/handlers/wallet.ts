@@ -5,13 +5,6 @@ import {
   inlineKeyboard,
 } from "../toolkit/index.js";
 
-const BALANCE = "$12.50";
-const TRANSACTIONS = [
-  { date: "Jul 20", desc: "eSIM Japan 3 GB", amount: "-$11.99" },
-  { date: "Jul 18", desc: "Wallet top-up", amount: "+$25.00" },
-  { date: "Jul 15", desc: "Mobile recharge India", amount: "-$4.49" },
-];
-
 function walletKeyboard() {
   return inlineKeyboard([
     [inlineButton("🎁 Redeem coupon", "wallet:coupon"), inlineButton("👥 Referral", "wallet:referral")],
@@ -19,17 +12,37 @@ function walletKeyboard() {
   ]);
 }
 
+function walletText(ctx: Ctx): string {
+  const wallet = ctx.session.wallet ?? { balance: 0, transactions: [] };
+  const balance = `$${wallet.balance.toFixed(2)}`;
+  if (wallet.transactions.length === 0) {
+    return (
+      `💰 Your wallet\n\n` +
+      `Balance: ${balance}\n\n` +
+      `No transactions yet — buy an eSIM or recharge to get started.`
+    );
+  }
+  const txLines = wallet.transactions
+    .slice(0, 10)
+    .map((t) => `${t.date}  ${t.desc}  ${t.amount}`)
+    .join("\n");
+  return (
+    `💰 Your wallet\n\n` +
+    `Balance: ${balance}\n\n` +
+    `Recent transactions:\n${txLines}\n\n` +
+    `Use the buttons below to redeem a coupon or check your referral code.`
+  );
+}
+
 const composer = new Composer<Ctx>();
 
 composer.command("wallet", async (ctx) => {
-  const txLines = TRANSACTIONS.map((t) => `${t.date}  ${t.desc}  ${t.amount}`).join("\n");
-  await ctx.reply(
-    `💰 Your wallet\n\n` +
-    `Balance: ${BALANCE}\n\n` +
-    `Recent transactions:\n${txLines}\n\n` +
-    `Use the buttons below to redeem a coupon or check your referral code.`,
-    { reply_markup: walletKeyboard() },
-  );
+  await ctx.reply(walletText(ctx), { reply_markup: walletKeyboard() });
+});
+
+composer.callbackQuery("wallet:show", async (ctx) => {
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageText(walletText(ctx), { reply_markup: walletKeyboard() });
 });
 
 composer.callbackQuery("wallet:coupon", async (ctx) => {
@@ -40,18 +53,6 @@ composer.callbackQuery("wallet:coupon", async (ctx) => {
     { reply_markup: inlineKeyboard([[inlineButton("⬅️ Back to wallet", "wallet:show")]]) },
   );
   ctx.session.step = "wallet_coupon";
-});
-
-composer.callbackQuery("wallet:show", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  const txLines = TRANSACTIONS.map((t) => `${t.date}  ${t.desc}  ${t.amount}`).join("\n");
-  await ctx.editMessageText(
-    `💰 Your wallet\n\n` +
-    `Balance: ${BALANCE}\n\n` +
-    `Recent transactions:\n${txLines}\n\n` +
-    `Use the buttons below to redeem a coupon or check your referral code.`,
-    { reply_markup: walletKeyboard() },
-  );
 });
 
 composer.callbackQuery("wallet:referral", async (ctx) => {
@@ -73,9 +74,20 @@ composer.on("message:text", async (ctx, next) => {
     return;
   }
   ctx.session.step = "idle";
+
+  // Apply coupon to wallet
+  if (!ctx.session.wallet) ctx.session.wallet = { balance: 0, transactions: [] };
+  ctx.session.wallet.balance += 2.0;
+  ctx.session.wallet.transactions.unshift({
+    date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    desc: `Coupon "${code}"`,
+    amount: "+$2.00",
+  });
+
+  const balance = `$${ctx.session.wallet.balance.toFixed(2)}`;
   await ctx.reply(
     `Coupon "${code}" redeemed! $2.00 has been added to your wallet.\n\n` +
-    `New balance: $14.50`,
+    `New balance: ${balance}`,
     { reply_markup: inlineKeyboard([[inlineButton("⬅️ Back to menu", "menu:main")]]) },
   );
 });

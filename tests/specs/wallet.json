@@ -1,14 +1,68 @@
 [
   {
-    "name": "/wallet shows balance and transaction history",
+    "name": "/wallet shows empty wallet state",
     "steps": [
       {
         "send": { "text": "/wallet" },
         "expect": [
           {
             "method": "sendMessage",
-            "payload": { "text": "💰 Your wallet\n\nBalance: $12.50\n\nRecent transactions:\nJul 20  eSIM Japan 3 GB  -$11.99\nJul 18  Wallet top-up  +$25.00\nJul 15  Mobile recharge India  -$4.49\n\nUse the buttons below to redeem a coupon or check your referral code." }
+            "payload": { "text": "💰 Your wallet\n\nBalance: $0.00\n\nNo transactions yet — buy an eSIM or recharge to get started." }
           }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "wallet:show returns to wallet view",
+    "steps": [
+      {
+        "send": { "text": "/wallet" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "wallet:show" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "💰 Your wallet\n\nBalance: $0.00\n\nNo transactions yet — buy an eSIM or recharge to get started." }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "wallet:coupon shows coupon input prompt",
+    "steps": [
+      {
+        "send": { "text": "/wallet" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "wallet:coupon" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Enter your coupon code to redeem it.\n\nJust type or paste the code here." }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "wallet:referral shows referral code",
+    "steps": [
+      {
+        "send": { "text": "/wallet" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "wallet:referral" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
         ]
       }
     ]
