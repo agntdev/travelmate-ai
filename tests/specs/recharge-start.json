@@ -1,19 +1,38 @@
 [
   {
-    "name": "Mobile Recharge",
+    "name": "Mobile Recharge — opens country selection",
     "steps": [
       {
+        "send": { "callback": "recharge:start" },
         "expect": [
+          { "method": "answerCallbackQuery" },
           {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Initiate mobile top-up flow"
-            }
+            "method": "editMessageText",
+            "payload": { "text": "Which country is your mobile number from?" }
           }
-        ],
-        "send": {
-          "callback": "recharge:start"
-        }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mobile Recharge — selecting a country prompts for phone number",
+    "steps": [
+      {
+        "send": { "callback": "recharge:start" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "recharge:country:IN" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Enter your 🇮🇳 India mobile number:" }
+          }
+        ]
       }
     ]
   }

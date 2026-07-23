@@ -1,19 +1,67 @@
 [
   {
-    "name": "Buy eSIM",
+    "name": "Buy eSIM — opens country selection",
     "steps": [
       {
+        "send": { "callback": "purchase:country_select" },
         "expect": [
+          { "method": "answerCallbackQuery" },
           {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Start eSIM purchase flow with country selection"
-            }
+            "method": "editMessageText",
+            "payload": { "text": "Where are you traveling? Pick a country to see available eSIM plans." }
           }
-        ],
-        "send": {
-          "callback": "purchase:country_select"
-        }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — selecting a country shows plans",
+    "steps": [
+      {
+        "send": { "callback": "purchase:country_select" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "purchase:country:JP" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "🇯🇵 Japan — pick a plan:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — selecting a plan shows checkout",
+    "steps": [
+      {
+        "send": { "callback": "purchase:country_select" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "purchase:country:JP" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "purchase:plan:jp_1g_7d" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "🇯🇵 Japan — 1 GB — 7 days\nPrice: $4.99\nValidity: 7 days\n\nConfirm your purchase?" }
+          }
+        ]
       }
     ]
   }

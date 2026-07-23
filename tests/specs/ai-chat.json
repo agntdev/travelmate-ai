@@ -1,19 +1,38 @@
 [
   {
-    "name": "Travel Assistant",
+    "name": "Travel Assistant — opens topic menu",
     "steps": [
       {
+        "send": { "callback": "ai:chat" },
         "expect": [
+          { "method": "answerCallbackQuery" },
           {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Open AI-powered travel help interface"
-            }
+            "method": "editMessageText",
+            "payload": { "text": "What can I help you with?\n\nPick a topic below, or just type your travel question." }
           }
-        ],
-        "send": {
-          "callback": "ai:chat"
-        }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Travel Assistant — selecting a topic shows info",
+    "steps": [
+      {
+        "send": { "callback": "ai:chat" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "ai:topic:visa" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Most Southeast Asian countries offer visa-on-arrival or visa-free entry for 30–90 days. Check your passport's expiry — many countries require 6 months validity. Always verify requirements for your specific nationality before traveling." }
+          }
+        ]
       }
     ]
   }
