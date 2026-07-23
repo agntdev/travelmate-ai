@@ -1,19 +1,15 @@
 [
   {
-    "name": "/wallet",
+    "name": "/wallet shows balance and transaction history",
     "steps": [
       {
+        "send": { "text": "/wallet" },
         "expect": [
           {
             "method": "sendMessage",
-            "payload": {
-              "text": "View wallet balance and transaction history"
-            }
+            "payload": { "text": "💰 Your wallet\n\nBalance: $12.50\n\nRecent transactions:\nJul 20  eSIM Japan 3 GB  -$11.99\nJul 18  Wallet top-up  +$25.00\nJul 15  Mobile recharge India  -$4.49\n\nUse the buttons below to redeem a coupon or check your referral code." }
           }
-        ],
-        "send": {
-          "text": "/wallet"
-        }
+        ]
       }
     ]
   }
