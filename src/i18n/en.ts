@@ -462,6 +462,70 @@ export const privacy = {
     "You can request data deletion anytime by contacting support.",
 };
 
+// ── 12. Admin panel (i18n ready) ─────────────────────────────────────────────
+export const admin = {
+  notAuthorized: "Not authorized.",
+  menuTitle: "🛠 Admin Panel\nChoose a section:",
+  dashboard: "📊 Dashboard",
+  orders: "📦 Orders",
+  users: "👥 Users",
+  providers: "🔌 Providers",
+  broadcasts: "📢 Broadcasts",
+  settings: "⚙️ Settings",
+  audit: "📜 Audit Logs",
+  back: "⬅️ Back",
+  confirm: "✅ Confirm",
+  cancel: "Cancel",
+  ownerOnly: "Owner only.",
+  actionDone: "Action completed. Audit logged.",
+  // dashboard
+  dashTitle: "📊 Dashboard\n\nSales today: {today}\nLast 7d: {w7}\nLast 30d: {w30}\nActive eSIMs: {active}\nPending orders: {pending}\nFailed payments: {failed}",
+  // orders
+  ordersTitle: "📦 Orders (page {page})",
+  orderDetail: "Order {id}\nUser: {user}\n{type} {plan}\nAmount: {amount}\nStatus: {status}\nAt: {at}",
+  noOrders: "No orders found.",
+  resendQR: "Resend QR",
+  retryPay: "Retry payment",
+  refund: "Refund",
+  cancelOrder: "Cancel order",
+  changeStatus: "Change status",
+  exportCSV: "Export CSV",
+  // confirm
+  confirmRefund: "Confirm refund of order {id}?",
+  confirmCancel: "Confirm cancel order {id}?",
+  confirmDeleteProv: "Confirm deactivate provider {name}?",
+  confirmBroadcast: "Confirm send broadcast now to {count} users?",
+  // users
+  usersTitle: "👥 Users (page {page})",
+  userDetail: "User {id}\nName: {name}\nCredits: {credits}\nBlocked: {blocked}",
+  addCredit: "Add credit",
+  blockUser: "Block",
+  unblockUser: "Unblock",
+  messageUser: "Message user",
+  // providers
+  providersTitle: "🔌 Providers",
+  providerDetail: "Provider: {name}\nActive: {active}",
+  createProv: "Create provider",
+  deactivate: "Deactivate",
+  activate: "Activate",
+  testFetch: "Test fetch",
+  // broadcasts
+  broadcastsTitle: "📢 Broadcasts",
+  compose: "Compose new",
+  schedule: "Schedule",
+  preview: "Preview",
+  sendNow: "Send now",
+  cancelSched: "Cancel scheduled",
+  rateLimit: "Rate limit: wait before next blast.",
+  // settings
+  settingsTitle: "⚙️ Settings\nTest mode: {test}",
+  toggleTest: "Toggle test mode",
+  // audit
+  auditTitle: "📜 Audit Logs (recent)",
+  noAudits: "No audit entries.",
+  auditExport: "Export CSV",
+};
+
 // ── Export as flat lookup for JSON generation ─────────────────────────────────
 
 export const allCopy = {
@@ -476,4 +540,5 @@ export const allCopy = {
   buttons,
   notifications,
   privacy,
+  admin,
 };

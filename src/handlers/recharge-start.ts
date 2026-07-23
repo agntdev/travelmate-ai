@@ -7,6 +7,7 @@ import {
   confirmKeyboard,
 } from "../toolkit/index.js";
 import { recharge as copy, render } from "../i18n/en.js";
+import { store, ensureUser } from "../store.js";
 
 registerMainMenuItem({ label: "📲 Recharge", data: "recharge:start", order: 20 });
 
@@ -246,25 +247,19 @@ composer.callbackQuery("recharge:pay:yes", async (ctx) => {
   const ops = OPERATORS[r.country ?? ""] ?? [];
   const op = ops.find((o) => o.id === r.operator);
 
-  // Record order
+  // Record order durable
   const orderId = `RCG-${Date.now().toString(36).toUpperCase()}`;
-  if (!ctx.session.orders) ctx.session.orders = [];
-  ctx.session.orders.push({
+  await ensureUser(ctx.from || undefined);
+  await store.saveOrder({
     id: orderId,
+    userId: ctx.from?.id ?? 0,
     type: "recharge",
     country: country?.name ?? r.country,
     plan: `${op?.name ?? r.operator} — ${r.amount}`,
     amount: r.amount,
     status: "paid",
     createdAt: new Date().toISOString(),
-  });
-
-  // Add to wallet transactions
-  if (!ctx.session.wallet) ctx.session.wallet = { balance: 0, transactions: [] };
-  ctx.session.wallet.transactions.unshift({
-    date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    desc: `Recharge ${op?.name ?? r.operator} ${r.phone}`,
-    amount: `-${r.amount}`,
+    paymentMethod: "wallet",
   });
 
   ctx.session.step = "idle";

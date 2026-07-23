@@ -7,6 +7,7 @@ import {
   confirmKeyboard,
 } from "../toolkit/index.js";
 import { purchase as copy, buttons as btn, render } from "../i18n/en.js";
+import { store, ensureUser } from "../store.js";
 
 registerMainMenuItem({ label: "🛒 Buy eSIM", data: "purchase:country_select", order: 10 });
 
@@ -648,24 +649,18 @@ composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
 
   emitEvent({ type: "payment_attempt", userId: ctx.from?.id ?? 0, orderId, method: methodName });
 
-  // Record order
-  if (!ctx.session.orders) ctx.session.orders = [];
-  ctx.session.orders.push({
+  // Record order durable
+  await ensureUser(ctx.from || undefined);
+  await store.saveOrder({
     id: orderId,
+    userId: ctx.from?.id ?? 0,
     type: "esim",
     country: country.name,
     plan: `${plan.provider} — ${plan.data} ${plan.validity}`,
     amount: total,
-    status: "succeeded",
+    status: "paid",
     createdAt: new Date().toISOString(),
-  });
-
-  // Add to wallet transactions
-  if (!ctx.session.wallet) ctx.session.wallet = { balance: 0, transactions: [] };
-  ctx.session.wallet.transactions.unshift({
-    date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    desc: `eSIM ${country.name} ${plan.data}`,
-    amount: `-${total}`,
+    paymentMethod: methodName,
   });
 
   emitEvent({ type: "payment_success", userId: ctx.from?.id ?? 0, orderId, amount: total });

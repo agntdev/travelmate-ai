@@ -5,6 +5,7 @@ import {
   inlineKeyboard,
 } from "../toolkit/index.js";
 import { wallet as copy, render } from "../i18n/en.js";
+import { store, ensureUser } from "../store.js";
 
 // ── Safe API helpers ──────────────────────────────────────────────────────────
 
@@ -33,13 +34,14 @@ function walletKeyboard() {
   ]);
 }
 
-function walletText(ctx: Ctx): string {
-  const wallet = ctx.session.wallet ?? { balance: 0, transactions: [] };
-  const balance = `$${wallet.balance.toFixed(2)}`;
-  if (wallet.transactions.length === 0) {
+async function walletText(ctx: Ctx): Promise<string> {
+  const u = await ensureUser(ctx.from || undefined);
+  const w = await store.getWallet(u.id);
+  const balance = `$${w.balance.toFixed(2)}`;
+  if (w.transactions.length === 0) {
     return render(copy.emptyFull, { balance });
   }
-  const txLines = wallet.transactions
+  const txLines = w.transactions
     .slice(0, 10)
     .map((t) => `${t.date}  ${t.desc}  ${t.amount}`)
     .join("\n");
@@ -51,12 +53,12 @@ function walletText(ctx: Ctx): string {
 const composer = new Composer<Ctx>();
 
 composer.command("wallet", async (ctx) => {
-  await ctx.reply(walletText(ctx), { reply_markup: walletKeyboard() });
+  await ctx.reply(await walletText(ctx), { reply_markup: walletKeyboard() });
 });
 
 composer.callbackQuery("wallet:show", async (ctx) => {
   await safeAnswer(ctx);
-  await safeEdit(ctx, walletText(ctx), { reply_markup: walletKeyboard() });
+  await safeEdit(ctx, await walletText(ctx), { reply_markup: walletKeyboard() });
 });
 
 composer.callbackQuery("wallet:coupon", async (ctx) => {
@@ -88,16 +90,10 @@ composer.on("message:text", async (ctx, next) => {
   }
   ctx.session.step = "idle";
 
-  // Apply coupon to wallet
-  if (!ctx.session.wallet) ctx.session.wallet = { balance: 0, transactions: [] };
-  ctx.session.wallet.balance += 2.0;
-  ctx.session.wallet.transactions.unshift({
-    date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    desc: `Coupon "${code}"`,
-    amount: "+$2.00",
-  });
-
-  const balance = `$${ctx.session.wallet.balance.toFixed(2)}`;
+  const u = await ensureUser(ctx.from || undefined);
+  await store.addCredit(u.id, 2.0, `Coupon ${code}`);
+  const w = await store.getWallet(u.id);
+  const balance = `$${w.balance.toFixed(2)}`;
   await ctx.reply(
     render(copy.couponSuccess, { code, balance }),
     { reply_markup: inlineKeyboard([[inlineButton("⬅️ Back to menu", "menu:main")]]) },
