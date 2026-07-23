@@ -7,7 +7,7 @@ import {
   confirmKeyboard,
 } from "../toolkit/index.js";
 
-registerMainMenuItem({ label: "🛒 Buy", data: "product:select", order: 10 });
+registerMainMenuItem({ label: "🛒 Buy eSIM", data: "purchase:country_select", order: 10 });
 
 // ── Data catalog ──────────────────────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ interface Plan {
   activation: string;
   compatible: string;
   coverage: string;
+  rating: string;
 }
 
 interface Country {
@@ -33,58 +34,58 @@ interface Country {
 const COUNTRIES: Country[] = [
   {
     name: "🇮🇳 India", code: "IN", plans: [
-      { id: "in_1g_7d_jio", name: "1 GB — 7 days", price: "$3.99", validity: "7 days", data: "1 GB", provider: "Jio", providerId: "jio", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "in_3g_30d_jio", name: "3 GB — 30 days", price: "$9.99", validity: "30 days", data: "3 GB", provider: "Jio", providerId: "jio", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "in_10g_30d_airtel", name: "10 GB — 30 days", price: "$24.99", validity: "30 days", data: "10 GB", provider: "Airtel", providerId: "airtel", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G major cities" },
+      { id: "in_1g_7d_jio", name: "1 GB — 7 days", price: "$3.99", validity: "7 days", data: "1 GB", provider: "Jio", providerId: "jio", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.5" },
+      { id: "in_3g_30d_jio", name: "3 GB — 30 days", price: "$9.99", validity: "30 days", data: "3 GB", provider: "Jio", providerId: "jio", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.5" },
+      { id: "in_10g_30d_airtel", name: "10 GB — 30 days", price: "$24.99", validity: "30 days", data: "10 GB", provider: "Airtel", providerId: "airtel", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G major cities", rating: "4.3" },
     ],
   },
   {
     name: "🇩🇪 Germany", code: "DE", plans: [
-      { id: "de_1g_7d_telekom", name: "1 GB — 7 days", price: "$4.99", validity: "7 days", data: "1 GB", provider: "Telekom", providerId: "telekom", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "de_3g_30d_vodafone", name: "3 GB — 30 days", price: "$12.99", validity: "30 days", data: "3 GB", provider: "Vodafone", providerId: "vodafone", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "de_10g_30d_o2", name: "10 GB — 30 days", price: "$29.99", validity: "30 days", data: "10 GB", provider: "O2", providerId: "o2", activation: "Instant", compatible: "All eSIM devices", coverage: "4G nationwide" },
+      { id: "de_1g_7d_telekom", name: "1 GB — 7 days", price: "$4.99", validity: "7 days", data: "1 GB", provider: "Telekom", providerId: "telekom", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.4" },
+      { id: "de_3g_30d_vodafone", name: "3 GB — 30 days", price: "$12.99", validity: "30 days", data: "3 GB", provider: "Vodafone", providerId: "vodafone", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.2" },
+      { id: "de_10g_30d_o2", name: "10 GB — 30 days", price: "$29.99", validity: "30 days", data: "10 GB", provider: "O2", providerId: "o2", activation: "Instant", compatible: "All eSIM devices", coverage: "4G nationwide", rating: "4.0" },
     ],
   },
   {
     name: "🇯🇵 Japan", code: "JP", plans: [
-      { id: "jp_1g_7d_docomo", name: "1 GB — 7 days", price: "$4.99", validity: "7 days", data: "1 GB", provider: "NTT Docomo", providerId: "docomo", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "jp_3g_30d_softbank", name: "3 GB — 30 days", price: "$11.99", validity: "30 days", data: "3 GB", provider: "SoftBank", providerId: "softbank", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas" },
-      { id: "jp_10g_30d_docomo", name: "10 GB — 30 days", price: "$29.99", validity: "30 days", data: "10 GB", provider: "NTT Docomo", providerId: "docomo", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
+      { id: "jp_1g_7d_docomo", name: "1 GB — 7 days", price: "$4.99", validity: "7 days", data: "1 GB", provider: "NTT Docomo", providerId: "docomo", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.7" },
+      { id: "jp_3g_30d_softbank", name: "3 GB — 30 days", price: "$11.99", validity: "30 days", data: "3 GB", provider: "SoftBank", providerId: "softbank", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas", rating: "4.3" },
+      { id: "jp_10g_30d_docomo", name: "10 GB — 30 days", price: "$29.99", validity: "30 days", data: "10 GB", provider: "NTT Docomo", providerId: "docomo", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.7" },
     ],
   },
   {
     name: "🇦🇺 Australia", code: "AU", plans: [
-      { id: "au_1g_7d_telstra", name: "1 GB — 7 days", price: "$5.99", validity: "7 days", data: "1 GB", provider: "Telstra", providerId: "telstra", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G major cities" },
-      { id: "au_3g_30d_optus", name: "3 GB — 30 days", price: "$14.99", validity: "30 days", data: "3 GB", provider: "Optus", providerId: "optus", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas" },
-      { id: "au_10g_30d_telstra", name: "10 GB — 30 days", price: "$34.99", validity: "30 days", data: "10 GB", provider: "Telstra", providerId: "telstra", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
+      { id: "au_1g_7d_telstra", name: "1 GB — 7 days", price: "$5.99", validity: "7 days", data: "1 GB", provider: "Telstra", providerId: "telstra", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G major cities", rating: "4.5" },
+      { id: "au_3g_30d_optus", name: "3 GB — 30 days", price: "$14.99", validity: "30 days", data: "3 GB", provider: "Optus", providerId: "optus", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas", rating: "4.2" },
+      { id: "au_10g_30d_telstra", name: "10 GB — 30 days", price: "$34.99", validity: "30 days", data: "10 GB", provider: "Telstra", providerId: "telstra", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.5" },
     ],
   },
   {
     name: "🇫🇷 France", code: "FR", plans: [
-      { id: "fr_1g_7d_orange", name: "1 GB — 7 days", price: "$4.49", validity: "7 days", data: "1 GB", provider: "Orange", providerId: "orange", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "fr_3g_30d_sfr", name: "3 GB — 30 days", price: "$11.99", validity: "30 days", data: "3 GB", provider: "SFR", providerId: "sfr", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas" },
-      { id: "fr_10g_30d_orange", name: "10 GB — 30 days", price: "$27.99", validity: "30 days", data: "10 GB", provider: "Orange", providerId: "orange", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
+      { id: "fr_1g_7d_orange", name: "1 GB — 7 days", price: "$4.49", validity: "7 days", data: "1 GB", provider: "Orange", providerId: "orange", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.4" },
+      { id: "fr_3g_30d_sfr", name: "3 GB — 30 days", price: "$11.99", validity: "30 days", data: "3 GB", provider: "SFR", providerId: "sfr", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas", rating: "4.1" },
+      { id: "fr_10g_30d_orange", name: "10 GB — 30 days", price: "$27.99", validity: "30 days", data: "10 GB", provider: "Orange", providerId: "orange", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.4" },
     ],
   },
   {
     name: "🇦🇪 United Arab Emirates", code: "AE", plans: [
-      { id: "ae_1g_7d_etisalat", name: "1 GB — 7 days", price: "$6.99", validity: "7 days", data: "1 GB", provider: "Etisalat", providerId: "etisalat", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "ae_3g_30d_du", name: "3 GB — 30 days", price: "$16.99", validity: "30 days", data: "3 GB", provider: "du", providerId: "du", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas" },
-      { id: "ae_10g_30d_etisalat", name: "10 GB — 30 days", price: "$39.99", validity: "30 days", data: "10 GB", provider: "Etisalat", providerId: "etisalat", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
+      { id: "ae_1g_7d_etisalat", name: "1 GB — 7 days", price: "$6.99", validity: "7 days", data: "1 GB", provider: "Etisalat", providerId: "etisalat", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.3" },
+      { id: "ae_3g_30d_du", name: "3 GB — 30 days", price: "$16.99", validity: "30 days", data: "3 GB", provider: "du", providerId: "du", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas", rating: "4.1" },
+      { id: "ae_10g_30d_etisalat", name: "10 GB — 30 days", price: "$39.99", validity: "30 days", data: "10 GB", provider: "Etisalat", providerId: "etisalat", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.3" },
     ],
   },
   {
     name: "🇬🇧 United Kingdom", code: "GB", plans: [
-      { id: "gb_1g_7d_ee", name: "1 GB — 7 days", price: "$4.99", validity: "7 days", data: "1 GB", provider: "EE", providerId: "ee", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "gb_3g_30d_vodafone", name: "3 GB — 30 days", price: "$13.99", validity: "30 days", data: "3 GB", provider: "Vodafone", providerId: "vodafone", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas" },
-      { id: "gb_10g_30d_ee", name: "10 GB — 30 days", price: "$33.99", validity: "30 days", data: "10 GB", provider: "EE", providerId: "ee", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
+      { id: "gb_1g_7d_ee", name: "1 GB — 7 days", price: "$4.99", validity: "7 days", data: "1 GB", provider: "EE", providerId: "ee", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.5" },
+      { id: "gb_3g_30d_vodafone", name: "3 GB — 30 days", price: "$13.99", validity: "30 days", data: "3 GB", provider: "Vodafone", providerId: "vodafone", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G urban areas", rating: "4.2" },
+      { id: "gb_10g_30d_ee", name: "10 GB — 30 days", price: "$33.99", validity: "30 days", data: "10 GB", provider: "EE", providerId: "ee", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.5" },
     ],
   },
   {
     name: "🇺🇸 United States", code: "US", plans: [
-      { id: "us_1g_7d_tmobile", name: "1 GB — 7 days", price: "$4.49", validity: "7 days", data: "1 GB", provider: "T-Mobile", providerId: "tmobile", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "us_3g_30d_att", name: "3 GB — 30 days", price: "$12.99", validity: "30 days", data: "3 GB", provider: "AT&T", providerId: "att", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
-      { id: "us_10g_30d_tmobile", name: "10 GB — 30 days", price: "$32.99", validity: "30 days", data: "10 GB", provider: "T-Mobile", providerId: "tmobile", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide" },
+      { id: "us_1g_7d_tmobile", name: "1 GB — 7 days", price: "$4.49", validity: "7 days", data: "1 GB", provider: "T-Mobile", providerId: "tmobile", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.6" },
+      { id: "us_3g_30d_att", name: "3 GB — 30 days", price: "$12.99", validity: "30 days", data: "3 GB", provider: "AT&T", providerId: "att", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.4" },
+      { id: "us_10g_30d_tmobile", name: "10 GB — 30 days", price: "$32.99", validity: "30 days", data: "10 GB", provider: "T-Mobile", providerId: "tmobile", activation: "Instant", compatible: "All eSIM devices", coverage: "4G/5G nationwide", rating: "4.6" },
     ],
   },
 ];
@@ -101,14 +102,62 @@ function parsePrice(priceStr: string): number {
   return parseFloat(priceStr.replace(/[^0-9.]/g, ""));
 }
 
-// ── Keyboard builders ─────────────────────────────────────────────────────────
+// ── Analytics ─────────────────────────────────────────────────────────────────
 
-function productTypeKeyboard() {
-  return inlineKeyboard([
-    [inlineButton("📱 eSIM", "product:esim"), inlineButton("📲 Recharge", "product:recharge")],
-    [inlineButton("⬅️ Back to menu", "menu:main")],
-  ]);
+type AnalyticsEvent =
+  | { type: "purchase_started"; userId: number }
+  | { type: "plan_selected"; userId: number; planId: string; country: string; price: string }
+  | { type: "payment_attempt"; userId: number; orderId: string; method: string }
+  | { type: "payment_success"; userId: number; orderId: string; amount: string }
+  | { type: "payment_failure"; userId: number; orderId: string; method: string; error: string }
+  | { type: "purchase_cancelled"; userId: number; step: string };
+
+function emitEvent(_event: AnalyticsEvent) {
+  // Analytics instrumentation — no-op in test/dev.
+  // In production, send to analytics endpoint via fetch.
 }
+
+// ── Email confirmation ────────────────────────────────────────────────────────
+
+async function sendConfirmationEmail(
+  email: string,
+  orderId: string,
+  planName: string,
+  country: string,
+  total: string,
+): Promise<boolean> {
+  const apiKey = process.env.EMAIL_API_KEY;
+  const fromAddress = process.env.EMAIL_FROM;
+  if (!apiKey || !fromAddress) return false;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: email,
+        subject: `TravelMate — eSIM Order ${orderId}`,
+        html:
+          `<p>Hi!</p>` +
+          `<p>Your eSIM has been purchased successfully.</p>` +
+          `<p><strong>Order:</strong> ${orderId}</p>` +
+          `<p><strong>Plan:</strong> ${planName}</p>` +
+          `<p><strong>Country:</strong> ${country}</p>` +
+          `<p><strong>Total:</strong> ${total}</p>` +
+          `<p>Check your Telegram chat for the QR code and activation instructions.</p>` +
+          `<p>— TravelMate Team</p>`,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// ── Keyboard builders ─────────────────────────────────────────────────────────
 
 function countryKeyboard() {
   const rows: ReturnType<typeof inlineButton>[][] = [];
@@ -118,18 +167,26 @@ function countryKeyboard() {
     );
     rows.push(row);
   }
-  rows.push([inlineButton("⬅️ Back", "product:select")]);
+  rows.push([inlineButton("⬅️ Back to menu", "menu:main")]);
   return inlineKeyboard(rows);
 }
 
 function planKeyboard(countryCode: string) {
   const country = COUNTRIES.find((c) => c.code === countryCode);
-  if (!country) return inlineKeyboard([[inlineButton("⬅️ Back", "product:select")]]);
+  if (!country) return inlineKeyboard([[inlineButton("⬅️ Back", "purchase:country_select")]]);
   const rows = country.plans.map((p) => [
     inlineButton(`${p.provider} — ${p.data} ${p.validity} — ${p.price}`, `purchase:plan:${p.id}`),
   ]);
   rows.push([inlineButton("⬅️ Back to countries", "purchase:country_select")]);
   return inlineKeyboard(rows);
+}
+
+function activationKeyboard() {
+  return inlineKeyboard([
+    [inlineButton("⚡ Immediate", "purchase:activation:immediate")],
+    [inlineButton("📅 Scheduled", "purchase:activation:scheduled")],
+    [inlineButton("⬅️ Back to plans", "purchase:back:plans")],
+  ]);
 }
 
 function quantityKeyboard() {
@@ -140,7 +197,7 @@ function quantityKeyboard() {
       inlineButton("3", "purchase:qty:3"),
       inlineButton("4", "purchase:qty:4"),
     ],
-    [inlineButton("⬅️ Back to plans", "purchase:back:plans")],
+    [inlineButton("⬅️ Back to activation", "purchase:back:activation")],
   ]);
 }
 
@@ -162,63 +219,106 @@ function supportKeyboard() {
   ]);
 }
 
+function postSuccessKeyboard() {
+  return inlineKeyboard([
+    [inlineButton("🆕 Buy another eSIM", "purchase:country_select")],
+    [inlineButton("💬 Need help?", "ai:chat")],
+    [inlineButton("⬅️ Back to menu", "menu:main")],
+  ]);
+}
+
+function errorKeyboard() {
+  return inlineKeyboard([
+    [inlineButton("🔄 Try again", "purchase:checkout")],
+    [inlineButton("💳 Change payment method", "purchase:pay_methods")],
+    [inlineButton("💬 Contact support", "ai:chat")],
+    [inlineButton("⬅️ Back to menu", "menu:main")],
+  ]);
+}
+
+// ── Safe API helpers ──────────────────────────────────────────────────────────
+
+async function safeAnswer(ctx: Ctx) {
+  try {
+    await ctx.answerCallbackQuery();
+  } catch {
+    // Query too old or invalid — ignore silently.
+  }
+}
+
+async function safeEdit(ctx: Ctx, text: string, extra?: Record<string, unknown>) {
+  try {
+    await ctx.editMessageText(text, extra);
+  } catch {
+    // Message not modified or already deleted — ignore.
+  }
+}
+
 // ── Composer ──────────────────────────────────────────────────────────────────
 
 const composer = new Composer<Ctx>();
 
-// Step 1: Product type selection
-composer.callbackQuery("product:select", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  ctx.session.step = "product_type";
-  ctx.session.purchase = {};
-  await ctx.editMessageText("What would you like to buy?", {
-    reply_markup: productTypeKeyboard(),
-  });
-});
+// ── Entry points ──────────────────────────────────────────────────────────────
 
-// Step 2a: eSIM — country selection
-composer.callbackQuery("product:esim", async (ctx) => {
-  await ctx.answerCallbackQuery();
+// /buy slash command (power-user shortcut per spec)
+composer.command("buy", async (ctx) => {
+  emitEvent({ type: "purchase_started", userId: ctx.from?.id ?? 0 });
   ctx.session.step = "esim_country";
   ctx.session.purchase = {};
-  await ctx.editMessageText("Where are you traveling? Pick a country to see available eSIM plans.", {
+  await ctx.reply("Where are you traveling? Pick a country to see available eSIM plans.", {
     reply_markup: countryKeyboard(),
   });
 });
 
+// Main menu "Buy eSIM" button — opens country selection directly
 composer.callbackQuery("purchase:country_select", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
+  emitEvent({ type: "purchase_started", userId: ctx.from?.id ?? 0 });
   ctx.session.step = "esim_country";
   ctx.session.purchase = {};
-  await ctx.editMessageText("Where are you traveling? Pick a country to see available eSIM plans.", {
+  await safeEdit(ctx, "Where are you traveling? Pick a country to see available eSIM plans.", {
     reply_markup: countryKeyboard(),
   });
 });
 
-// Step 2b: Country selected — show plans
+// Legacy "🛒 Buy" button entry (product type selection)
+composer.callbackQuery("product:select", async (ctx) => {
+  await safeAnswer(ctx);
+  emitEvent({ type: "purchase_started", userId: ctx.from?.id ?? 0 });
+  ctx.session.step = "esim_country";
+  ctx.session.purchase = {};
+  await safeEdit(ctx, "Where are you traveling? Pick a country to see available eSIM plans.", {
+    reply_markup: countryKeyboard(),
+  });
+});
+
+// ── Step 1: Country selected → show plans ─────────────────────────────────────
+
 composer.callbackQuery(/^purchase:country:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const code = ctx.match[1];
   const country = COUNTRIES.find((c) => c.code === code);
   if (!country) {
-    await ctx.editMessageText("Country not found. Try again.", { reply_markup: countryKeyboard() });
+    await safeEdit(ctx, "Country not found. Try again.", { reply_markup: countryKeyboard() });
     return;
   }
   ctx.session.purchase = { country: code };
   ctx.session.step = "esim_plan";
-  await ctx.editMessageText(
+  await safeEdit(
+    ctx,
     `${country.name} — available plans:\n\nChoose a plan below:`,
     { reply_markup: planKeyboard(code) }
   );
 });
 
-// Step 3: Plan selected — show details + quantity
+// ── Step 2: Plan selected → show details + activation ─────────────────────────
+
 composer.callbackQuery(/^purchase:plan:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const planId = ctx.match[1];
   const result = findPlan(planId);
   if (!result || !ctx.session.purchase?.country) {
-    await ctx.editMessageText("Something went wrong. Start again.", {
+    await safeEdit(ctx, "Something went wrong. Start again.", {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -226,38 +326,63 @@ composer.callbackQuery(/^purchase:plan:(.+)$/, async (ctx) => {
   const { plan, country } = result;
   ctx.session.purchase.planId = planId;
   ctx.session.purchase.providerId = plan.providerId;
-  ctx.session.step = "esim_quantity";
+  ctx.session.step = "esim_activation";
 
-  await ctx.editMessageText(
+  emitEvent({ type: "plan_selected", userId: ctx.from?.id ?? 0, planId, country: country.name, price: plan.price });
+
+  await safeEdit(
+    ctx,
     `${country.name} — ${plan.provider}\n\n` +
     `${plan.data} — ${plan.validity}\n` +
     `Price: ${plan.price}\n` +
+    `Rating: ${plan.rating} ⭐\n` +
     `Activation: ${plan.activation}\n` +
     `Compatible: ${plan.compatible}\n` +
     `Coverage: ${plan.coverage}\n\n` +
+    `When would you like to activate this eSIM?`,
+    { reply_markup: activationKeyboard() }
+  );
+});
+
+// ── Step 3: Activation selected → show quantity ───────────────────────────────
+
+composer.callbackQuery(/^purchase:activation:(.+)$/, async (ctx) => {
+  await safeAnswer(ctx);
+  const activation = ctx.match[1]; // "immediate" or "scheduled"
+  ctx.session.purchase!.travelStart = activation === "immediate" ? "Immediate" : "";
+  ctx.session.step = "esim_quantity";
+
+  if (activation === "scheduled") {
+    ctx.session.step = "esim_dates";
+    await safeEdit(
+      ctx,
+      `When does your trip start? (e.g. Aug 15)`,
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton("⬅️ Back to activation", "purchase:back:activation")],
+        ]),
+      }
+    );
+    return;
+  }
+
+  const result = findPlan(ctx.session.purchase?.planId ?? "");
+  if (!result) return;
+  const { plan, country } = result;
+
+  await safeEdit(
+    ctx,
+    `${country.name} — ${plan.provider}\n\n` +
+    `${plan.data} — ${plan.validity}\n` +
+    `Price: ${plan.price}\n` +
+    `Activation: Immediate\n\n` +
     `How many would you like?`,
     { reply_markup: quantityKeyboard() }
   );
 });
 
-// Step 4: Quantity selected — ask for travel dates
-composer.callbackQuery(/^purchase:qty:(\d+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
-  const qty = parseInt(ctx.match[1], 10);
-  ctx.session.purchase!.quantity = qty;
-  ctx.session.step = "esim_dates";
-  await ctx.editMessageText(
-    `Great choice! ${qty} eSIM${qty > 1 ? "s" : ""} selected.\n\n` +
-    `When does your trip start? (e.g. Aug 15)`,
-    {
-      reply_markup: inlineKeyboard([
-        [inlineButton("⬅️ Back to quantity", "purchase:back:quantity")],
-      ]),
-    }
-  );
-});
+// ── Step 3b: Scheduled date entry ────────────────────────────────────────────
 
-// Step 5: Travel dates — text input
 composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "esim_dates") return next();
   const text = ctx.message.text.trim();
@@ -277,7 +402,6 @@ composer.on("message:text", async (ctx, next) => {
   );
 });
 
-// Step 6: End date — ask for purchaser info
 composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "esim_dates_end") return next();
   const text = ctx.message.text.trim();
@@ -286,40 +410,43 @@ composer.on("message:text", async (ctx, next) => {
     return;
   }
   ctx.session.purchase!.travelEnd = text;
-  ctx.session.step = "esim_info";
+  ctx.session.step = "esim_quantity";
+
+  const result = findPlan(ctx.session.purchase?.planId ?? "");
+  if (!result) return;
+  const { plan, country } = result;
+
   await ctx.reply(
-    `Trip: ${ctx.session.purchase!.travelStart} → ${text}\n\n` +
-    `Almost there! Just need a couple of details:\n\n` +
-    `Your name:`,
-    {
-      reply_markup: inlineKeyboard([
-        [inlineButton("⬅️ Back to dates", "purchase:back:dates_end")],
-      ]),
-    }
+    `${country.name} — ${plan.provider}\n\n` +
+    `${plan.data} — ${plan.validity}\n` +
+    `Price: ${plan.price}\n` +
+    `Activation: ${ctx.session.purchase!.travelStart} → ${text}\n\n` +
+    `How many would you like?`,
+    { reply_markup: quantityKeyboard() }
   );
 });
 
-// Step 7a: Name received — ask for email
-composer.on("message:text", async (ctx, next) => {
-  if (ctx.session.step !== "esim_info") return next();
-  const name = ctx.message.text.trim();
-  if (name.length < 2) {
-    await ctx.reply("Please enter your name.");
-    return;
-  }
-  ctx.session.purchase!.purchaser = { name };
+// ── Step 4: Quantity selected → ask for contact info ──────────────────────────
+
+composer.callbackQuery(/^purchase:qty:(\d+)$/, async (ctx) => {
+  await safeAnswer(ctx);
+  const qty = parseInt(ctx.match[1], 10);
+  ctx.session.purchase!.quantity = qty;
   ctx.session.step = "esim_info_email";
-  await ctx.reply(
-    `Thanks, ${name}!\n\nYour email (for QR code delivery):`,
+  await safeEdit(
+    ctx,
+    `Great choice! ${qty} eSIM${qty > 1 ? "s" : ""} selected.\n\n` +
+    `Your email (for QR code delivery):`,
     {
       reply_markup: inlineKeyboard([
-        [inlineButton("⬅️ Back to name", "purchase:back:info_name")],
+        [inlineButton("⬅️ Back to quantity", "purchase:back:quantity")],
       ]),
     }
   );
 });
 
-// Step 7b: Email received — show order review
+// ── Step 5: Email collected → ask for phone (optional) ────────────────────────
+
 composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "esim_info_email") return next();
   const email = ctx.message.text.trim();
@@ -327,9 +454,44 @@ composer.on("message:text", async (ctx, next) => {
     await ctx.reply("Please enter a valid email address.");
     return;
   }
-  ctx.session.purchase!.purchaser!.email = email;
+  ctx.session.purchase!.purchaser = { email };
+  ctx.session.step = "esim_info_phone";
+  await ctx.reply(
+    `Email saved: ${email}\n\n` +
+    `Phone number (optional — for delivery notifications):`,
+    {
+      reply_markup: inlineKeyboard([
+        [inlineButton("Skip", "purchase:info_phone:skip")],
+        [inlineButton("⬅️ Back to email", "purchase:back:info_email")],
+      ]),
+    }
+  );
+});
 
-  const result = findPlan(ctx.session.purchase!.planId!);
+// ── Step 5b: Phone skipped or collected → show order review ──────────────────
+
+composer.callbackQuery("purchase:info_phone:skip", async (ctx) => {
+  await safeAnswer(ctx);
+  if (!ctx.session.purchase?.purchaser) return;
+  ctx.session.purchase.purchaser.phone = "";
+  ctx.session.step = "esim_review";
+  await renderReview(ctx);
+});
+
+composer.on("message:text", async (ctx, next) => {
+  if (ctx.session.step !== "esim_info_phone") return next();
+  const phone = ctx.message.text.trim();
+  if (ctx.session.purchase?.purchaser) {
+    ctx.session.purchase.purchaser.phone = phone;
+  }
+  ctx.session.step = "esim_review";
+  await renderReview(ctx);
+});
+
+// ── Review renderer ──────────────────────────────────────────────────────────
+
+async function renderReview(ctx: Ctx) {
+  const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) {
     await ctx.reply("Something went wrong. Start again.", {
       reply_markup: backToMenuKeyboard(),
@@ -350,9 +512,8 @@ composer.on("message:text", async (ctx, next) => {
     `Plan: ${plan.provider} — ${plan.data} ${plan.validity}\n` +
     `Country: ${country.name}\n` +
     `Quantity: ${qty}\n` +
-    `Travel: ${ctx.session.purchase!.travelStart} → ${ctx.session.purchase!.travelEnd}\n` +
-    `Name: ${ctx.session.purchase!.purchaser!.name}\n` +
-    `Email: ${email}\n\n` +
+    `Activation: ${ctx.session.purchase!.travelStart}${ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : ""}\n` +
+    `Email: ${ctx.session.purchase!.purchaser!.email}\n\n` +
     `💰 Breakdown\n` +
     `Base price: $${subtotal.toFixed(2)}\n` +
     `Taxes & fees: $${taxes.toFixed(2)}\n` +
@@ -367,13 +528,15 @@ composer.on("message:text", async (ctx, next) => {
       ]),
     }
   );
-});
+}
 
-// Step 8: Promo code
+// ── Step 6: Promo code ───────────────────────────────────────────────────────
+
 composer.callbackQuery("purchase:promo", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   ctx.session.step = "esim_promo";
-  await ctx.editMessageText(
+  await safeEdit(
+    ctx,
     "Enter your promo code:",
     {
       reply_markup: inlineKeyboard([
@@ -389,7 +552,7 @@ composer.on("message:text", async (ctx, next) => {
   ctx.session.purchase!.promoCode = code;
   ctx.session.step = "esim_review";
 
-  const result = findPlan(ctx.session.purchase!.planId!);
+  const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) {
     await ctx.reply("Something went wrong. Start again.", {
       reply_markup: backToMenuKeyboard(),
@@ -404,16 +567,16 @@ composer.on("message:text", async (ctx, next) => {
   const taxes = Math.round((subtotal - discount) * 0.1 * 100) / 100;
   const total = subtotal - discount + taxes;
 
-  const discountLine = discount > 0 ? `Promo (${code.toUpperCase()}): -$${discount.toFixed(2)}\n` : 
-    `Promo "${code}" — not a valid code. You can still pay full price.\n`;
+  const discountLine = discount > 0
+    ? `Promo (${code.toUpperCase()}): -$${discount.toFixed(2)}\n`
+    : `Promo "${code}" — not a valid code. You can still pay full price.\n`;
 
   await ctx.reply(
     `📋 Order Review\n\n` +
     `Plan: ${plan.provider} — ${plan.data} ${plan.validity}\n` +
     `Country: ${country.name}\n` +
     `Quantity: ${qty}\n` +
-    `Travel: ${ctx.session.purchase!.travelStart} → ${ctx.session.purchase!.travelEnd}\n` +
-    `Name: ${ctx.session.purchase!.purchaser!.name}\n` +
+    `Activation: ${ctx.session.purchase!.travelStart}${ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : ""}\n` +
     `Email: ${ctx.session.purchase!.purchaser!.email}\n\n` +
     `💰 Breakdown\n` +
     `Base price: $${subtotal.toFixed(2)}\n` +
@@ -432,42 +595,177 @@ composer.on("message:text", async (ctx, next) => {
   );
 });
 
-// Back navigation
+// ── Step 7: Checkout — show payment methods ───────────────────────────────────
+
+composer.callbackQuery("purchase:checkout", async (ctx) => {
+  await safeAnswer(ctx);
+  ctx.session.step = "esim_payment";
+  await safeEdit(
+    ctx,
+    `Choose a payment method:`,
+    { reply_markup: paymentMethodKeyboard() }
+  );
+});
+
+// ── Step 8: Payment processing ───────────────────────────────────────────────
+
+composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
+  await safeAnswer(ctx);
+  const method = ctx.match[1];
+  const methodName = method === "upi" ? "UPI" : "Card";
+  const result = findPlan(ctx.session.purchase?.planId ?? "");
+  if (!result) {
+    await safeEdit(ctx, "Session expired. Start again.", {
+      reply_markup: backToMenuKeyboard(),
+    });
+    return;
+  }
+  const { plan, country } = result;
+  const qty = ctx.session.purchase!.quantity ?? 1;
+  const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
+  const total = `$${(parsePrice(plan.price) * qty).toFixed(2)}`;
+
+  emitEvent({ type: "payment_attempt", userId: ctx.from?.id ?? 0, orderId, method: methodName });
+
+  // Record order
+  if (!ctx.session.orders) ctx.session.orders = [];
+  ctx.session.orders.push({
+    id: orderId,
+    type: "esim",
+    country: country.name,
+    plan: `${plan.provider} — ${plan.data} ${plan.validity}`,
+    amount: total,
+    status: "succeeded",
+    createdAt: new Date().toISOString(),
+  });
+
+  // Add to wallet transactions
+  if (!ctx.session.wallet) ctx.session.wallet = { balance: 0, transactions: [] };
+  ctx.session.wallet.transactions.unshift({
+    date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    desc: `eSIM ${country.name} ${plan.data}`,
+    amount: `-${total}`,
+  });
+
+  emitEvent({ type: "payment_success", userId: ctx.from?.id ?? 0, orderId, amount: total });
+
+  // Send confirmation email (best-effort, does not block flow)
+  const email = ctx.session.purchase?.purchaser?.email;
+  if (email) {
+    sendConfirmationEmail(email, orderId, `${plan.provider} — ${plan.data}`, country.name, total).catch(() => {});
+  }
+
+  ctx.session.step = "idle";
+  ctx.session.purchase = {};
+
+  await safeEdit(
+    ctx,
+    `✅ Payment received via ${methodName}!\n\n` +
+    `Your eSIM QR code and installation instructions are being sent to ${email ?? "your email"}.\n\n` +
+    `📱 QR Code Delivery\n` +
+    `Check your email for the QR code and step-by-step device-specific installation guide.\n\n` +
+    `Need help with anything else?`,
+    {
+      reply_markup: postSuccessKeyboard(),
+    }
+  );
+});
+
+// ── Cancel ───────────────────────────────────────────────────────────────────
+
+composer.callbackQuery("purchase:cancel", async (ctx) => {
+  await safeAnswer(ctx);
+  emitEvent({ type: "purchase_cancelled", userId: ctx.from?.id ?? 0, step: ctx.session.step ?? "unknown" });
+  ctx.session.step = "idle";
+  ctx.session.purchase = {};
+  await safeEdit(ctx, "No worries — your order was cancelled. Tap a button below to do something else.", {
+    reply_markup: backToMenuKeyboard(),
+  });
+});
+
+// Change payment method — return to payment method selection
+composer.callbackQuery("purchase:pay_methods", async (ctx) => {
+  await safeAnswer(ctx);
+  ctx.session.step = "esim_payment";
+  await safeEdit(
+    ctx,
+    `Choose a payment method:`,
+    { reply_markup: paymentMethodKeyboard() }
+  );
+});
+
+// ── Back navigation ──────────────────────────────────────────────────────────
+
+composer.callbackQuery("purchase:back:activation", async (ctx) => {
+  await safeAnswer(ctx);
+  ctx.session.step = "esim_activation";
+  const result = findPlan(ctx.session.purchase?.planId ?? "");
+  if (!result) return;
+  const { plan, country } = result;
+  await safeEdit(
+    ctx,
+    `${country.name} — ${plan.provider}\n\n` +
+    `${plan.data} — ${plan.validity}\n` +
+    `Price: ${plan.price}\n` +
+    `Rating: ${plan.rating} ⭐\n` +
+    `Activation: ${plan.activation}\n` +
+    `Compatible: ${plan.compatible}\n` +
+    `Coverage: ${plan.coverage}\n\n` +
+    `When would you like to activate this eSIM?`,
+    { reply_markup: activationKeyboard() }
+  );
+});
+
 composer.callbackQuery("purchase:back:quantity", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   ctx.session.step = "esim_quantity";
   const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) return;
   const { plan, country } = result;
-  await ctx.editMessageText(
+  await safeEdit(
+    ctx,
     `${country.name} — ${plan.provider}\n\n` +
     `${plan.data} — ${plan.validity}\n` +
     `Price: ${plan.price}\n` +
-    `Activation: ${plan.activation}\n` +
-    `Compatible: ${plan.compatible}\n` +
-    `Coverage: ${plan.coverage}\n\n` +
+    `Activation: ${ctx.session.purchase?.travelStart ?? "Immediate"}\n\n` +
     `How many would you like?`,
     { reply_markup: quantityKeyboard() }
   );
 });
 
 composer.callbackQuery("purchase:back:plans", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const code = ctx.session.purchase?.country;
   if (!code) return;
   ctx.session.step = "esim_plan";
   const country = COUNTRIES.find((c) => c.code === code);
-  await ctx.editMessageText(
+  await safeEdit(
+    ctx,
     `${country?.name ?? "Country"} — available plans:\n\nChoose a plan below:`,
     { reply_markup: planKeyboard(code) }
   );
 });
 
 composer.callbackQuery("purchase:back:dates_start", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   ctx.session.step = "esim_dates";
-  await ctx.editMessageText(
+  await safeEdit(
+    ctx,
     `When does your trip start? (e.g. Aug 15)`,
+    {
+      reply_markup: inlineKeyboard([
+        [inlineButton("⬅️ Back to activation", "purchase:back:activation")],
+      ]),
+    }
+  );
+});
+
+composer.callbackQuery("purchase:back:info_email", async (ctx) => {
+  await safeAnswer(ctx);
+  ctx.session.step = "esim_info_email";
+  await safeEdit(
+    ctx,
+    `Your email (for QR code delivery):`,
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to quantity", "purchase:back:quantity")],
@@ -476,49 +774,8 @@ composer.callbackQuery("purchase:back:dates_start", async (ctx) => {
   );
 });
 
-composer.callbackQuery("purchase:back:dates_end", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  ctx.session.step = "esim_dates_end";
-  await ctx.editMessageText(
-    `Trip starts: ${ctx.session.purchase?.travelStart}\n\nWhen does your trip end? (e.g. Aug 25)`,
-    {
-      reply_markup: inlineKeyboard([
-        [inlineButton("⬅️ Back to start date", "purchase:back:dates_start")],
-      ]),
-    }
-  );
-});
-
-composer.callbackQuery("purchase:back:info_name", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  ctx.session.step = "esim_info";
-  await ctx.editMessageText(
-    `Trip: ${ctx.session.purchase?.travelStart} → ${ctx.session.purchase?.travelEnd}\n\n` +
-    `Your name:`,
-    {
-      reply_markup: inlineKeyboard([
-        [inlineButton("⬅️ Back to dates", "purchase:back:dates_end")],
-      ]),
-    }
-  );
-});
-
-composer.callbackQuery("purchase:back:info_email", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  ctx.session.step = "esim_info_email";
-  await ctx.editMessageText(
-    `Thanks, ${ctx.session.purchase?.purchaser?.name}!\n\nYour email (for QR code delivery):`,
-    {
-      reply_markup: inlineKeyboard([
-        [inlineButton("⬅️ Back to name", "purchase:back:info_name")],
-      ]),
-    }
-  );
-});
-
 composer.callbackQuery("purchase:back:review", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  // Re-render the review step
+  await safeAnswer(ctx);
   const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) return;
   const { plan, country } = result;
@@ -529,13 +786,13 @@ composer.callbackQuery("purchase:back:review", async (ctx) => {
   const total = subtotal + taxes;
   ctx.session.step = "esim_review";
 
-  await ctx.editMessageText(
+  await safeEdit(
+    ctx,
     `📋 Order Review\n\n` +
     `Plan: ${plan.provider} — ${plan.data} ${plan.validity}\n` +
     `Country: ${country.name}\n` +
     `Quantity: ${qty}\n` +
-    `Travel: ${ctx.session.purchase!.travelStart} → ${ctx.session.purchase!.travelEnd}\n` +
-    `Name: ${ctx.session.purchase!.purchaser!.name}\n` +
+    `Activation: ${ctx.session.purchase!.travelStart}${ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : ""}\n` +
     `Email: ${ctx.session.purchase!.purchaser!.email}\n\n` +
     `💰 Breakdown\n` +
     `Base price: $${subtotal.toFixed(2)}\n` +
@@ -551,77 +808,6 @@ composer.callbackQuery("purchase:back:review", async (ctx) => {
       ]),
     }
   );
-});
-
-// Step 9: Checkout — show payment methods
-composer.callbackQuery("purchase:checkout", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  ctx.session.step = "esim_payment";
-  await ctx.editMessageText(
-    `Choose a payment method:`,
-    { reply_markup: paymentMethodKeyboard() }
-  );
-});
-
-// Step 10: Payment processing
-composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
-  const method = ctx.match[1];
-  const methodName = method === "upi" ? "UPI" : "Card";
-  const result = findPlan(ctx.session.purchase?.planId ?? "");
-  if (!result) {
-    await ctx.editMessageText("Session expired. Start again.", {
-      reply_markup: backToMenuKeyboard(),
-    });
-    return;
-  }
-  const { plan, country } = result;
-  const qty = ctx.session.purchase!.quantity ?? 1;
-
-  // Record order
-  const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
-  if (!ctx.session.orders) ctx.session.orders = [];
-  ctx.session.orders.push({
-    id: orderId,
-    type: "esim",
-    country: country.name,
-    plan: `${plan.provider} — ${plan.data} ${plan.validity}`,
-    amount: `$${(parsePrice(plan.price) * qty).toFixed(2)}`,
-    status: "paid",
-    createdAt: new Date().toISOString(),
-  });
-
-  // Add to wallet transactions
-  if (!ctx.session.wallet) ctx.session.wallet = { balance: 0, transactions: [] };
-  ctx.session.wallet.transactions.unshift({
-    date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    desc: `eSIM ${country.name} ${plan.data}`,
-    amount: `-$${(parsePrice(plan.price) * qty).toFixed(2)}`,
-  });
-
-  ctx.session.step = "idle";
-  ctx.session.purchase = {};
-
-  await ctx.editMessageText(
-    `✅ Payment received via ${methodName}!\n\n` +
-    `Your eSIM QR code and installation instructions are being sent to ${ctx.session.purchase?.purchaser?.email ?? "your email"}.\n\n` +
-    `📱 QR Code Delivery\n` +
-    `Check your email for the QR code and step-by-step device-specific installation guide.\n\n` +
-    `Need help? Tap below.`,
-    {
-      reply_markup: supportKeyboard(),
-    }
-  );
-});
-
-// Cancel
-composer.callbackQuery("purchase:cancel", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  ctx.session.step = "idle";
-  ctx.session.purchase = {};
-  await ctx.editMessageText("No worries — your order was cancelled. Tap a button below to do something else.", {
-    reply_markup: backToMenuKeyboard(),
-  });
 });
 
 export default composer;
