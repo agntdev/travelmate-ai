@@ -6,6 +6,7 @@ import {
   inlineKeyboard,
   confirmKeyboard,
 } from "../toolkit/index.js";
+import { recharge as copy, render } from "../i18n/en.js";
 
 registerMainMenuItem({ label: "📲 Recharge", data: "recharge:start", order: 20 });
 
@@ -65,6 +66,24 @@ const AMOUNTS: Record<string, string[]> = {
   BR: ["R$20", "R$50", "R$100", "R$200"],
 };
 
+// ── Safe API helpers ──────────────────────────────────────────────────────────
+
+async function safeAnswer(ctx: Ctx) {
+  try {
+    await ctx.answerCallbackQuery();
+  } catch {
+    // Query too old or invalid — ignore silently.
+  }
+}
+
+async function safeEdit(ctx: Ctx, text: string, extra?: Record<string, unknown>) {
+  try {
+    await ctx.editMessageText(text, extra);
+  } catch {
+    // Message not modified or already deleted — ignore.
+  }
+}
+
 // ── Keyboard builders ─────────────────────────────────────────────────────────
 
 function countryKeyboard() {
@@ -110,50 +129,52 @@ const composer = new Composer<Ctx>();
 
 // Step 1: Country selection
 composer.callbackQuery("recharge:start", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   ctx.session.step = "recharge_country";
   ctx.session.recharge = {};
-  await ctx.editMessageText("Which country is your mobile number from?", {
+  await safeEdit(ctx, copy.countryPrompt, {
     reply_markup: countryKeyboard(),
   });
 });
 
 // Step 2: Country selected — show operators
 composer.callbackQuery(/^recharge:country:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const code = ctx.match[1];
   const country = COUNTRIES.find((c) => c.code === code);
   if (!country) {
-    await ctx.editMessageText("Country not found. Try again.", {
+    await safeEdit(ctx, copy.countryNotFound, {
       reply_markup: countryKeyboard(),
     });
     return;
   }
   ctx.session.recharge = { country: code };
   ctx.session.step = "recharge_operator";
-  await ctx.editMessageText(
-    `Who is your ${country.name} mobile operator?`,
+  await safeEdit(
+    ctx,
+    render(copy.operatorPrompt, { country: country.name }),
     { reply_markup: operatorKeyboard(code) }
   );
 });
 
 // Step 3: Operator selected — ask for phone number
 composer.callbackQuery(/^recharge:operator:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const opId = ctx.match[1];
   const country = ctx.session.recharge?.country;
   const ops = OPERATORS[country ?? ""] ?? [];
   const op = ops.find((o) => o.id === opId);
   if (!op || !country) {
-    await ctx.editMessageText("Something went wrong. Start again.", {
+    await safeEdit(ctx, copy.operatorError, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
   }
   ctx.session.recharge!.operator = opId;
   ctx.session.step = "recharge_phone";
-  await ctx.editMessageText(
-    `Enter your ${op.name} mobile number:`,
+  await safeEdit(
+    ctx,
+    render(copy.phonePrompt, { operator: op.name }),
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to operators", "recharge:back:operator")],
@@ -167,24 +188,23 @@ composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "recharge_phone") return next();
   const text = ctx.message.text.trim();
   if (text.length < 5 || text.length > 15 || !/^\+?\d+$/.test(text)) {
-    await ctx.reply("That doesn't look like a valid phone number. Enter your number with country code (e.g. +911234567890).");
+    await ctx.reply(copy.phoneInvalid);
     return;
   }
   ctx.session.recharge!.phone = text;
-  const country = COUNTRIES.find((c) => c.code === ctx.session.recharge!.country);
   ctx.session.step = "recharge_amount";
-  await ctx.reply(`Pick a top-up amount:`, {
+  await ctx.reply(copy.amountPrompt, {
     reply_markup: amountKeyboard(ctx.session.recharge!.country!),
   });
 });
 
 // Step 5: Amount selected — show confirmation
 composer.callbackQuery(/^recharge:amount:(.+)$/, async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const amount = ctx.match[1];
   const r = ctx.session.recharge;
   if (!r?.country || !r?.operator || !r?.phone) {
-    await ctx.editMessageText("Session expired. Start again.", {
+    await safeEdit(ctx, copy.sessionExpired, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -195,17 +215,18 @@ composer.callbackQuery(/^recharge:amount:(.+)$/, async (ctx) => {
   ctx.session.recharge!.amount = amount;
   ctx.session.step = "recharge_confirm";
 
-  await ctx.editMessageText(
-    `📋 Recharge Summary\n\n` +
-    `Country: ${country?.name ?? r.country}\n` +
-    `Operator: ${op?.name ?? r.operator}\n` +
-    `Phone: ${r.phone}\n` +
-    `Amount: ${amount}\n\n` +
-    `Confirm this recharge?`,
+  await safeEdit(
+    ctx,
+    render(copy.summary, {
+      country: country?.name ?? r.country,
+      operator: op?.name ?? r.operator,
+      phone: r.phone,
+      amount,
+    }),
     {
       reply_markup: confirmKeyboard("recharge:pay", {
-        yes: "💳 Confirm and Pay",
-        no: "Cancel",
+        yes: copy.confirmPay,
+        no: copy.confirmCancel,
       }),
     }
   );
@@ -213,10 +234,10 @@ composer.callbackQuery(/^recharge:amount:(.+)$/, async (ctx) => {
 
 // Step 6a: Confirmed — process payment
 composer.callbackQuery("recharge:pay:yes", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const r = ctx.session.recharge;
   if (!r?.country || !r?.operator || !r?.phone || !r?.amount) {
-    await ctx.editMessageText("Session expired. Start again.", {
+    await safeEdit(ctx, copy.sessionExpired, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -249,11 +270,13 @@ composer.callbackQuery("recharge:pay:yes", async (ctx) => {
   ctx.session.step = "idle";
   ctx.session.recharge = {};
 
-  await ctx.editMessageText(
-    `✅ Recharge successful!\n\n` +
-    `${r.amount} has been sent to ${r.phone} (${op?.name ?? r.operator}).\n\n` +
-    `You'll receive a confirmation SMS from your operator shortly.\n\n` +
-    `Need help with anything else?`,
+  await safeEdit(
+    ctx,
+    render(copy.success, {
+      amount: r.amount,
+      phone: r.phone,
+      operator: op?.name ?? r.operator,
+    }),
     {
       reply_markup: supportKeyboard(),
     }
@@ -262,22 +285,23 @@ composer.callbackQuery("recharge:pay:yes", async (ctx) => {
 
 // Step 6b: Cancelled
 composer.callbackQuery("recharge:pay:no", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   ctx.session.step = "idle";
   ctx.session.recharge = {};
-  await ctx.editMessageText("Recharge cancelled. Tap a button below to do something else.", {
+  await safeEdit(ctx, copy.cancelled, {
     reply_markup: backToMenuKeyboard(),
   });
 });
 
 // Back navigation
 composer.callbackQuery("recharge:back:operator", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswer(ctx);
   const country = COUNTRIES.find((c) => c.code === ctx.session.recharge?.country);
   if (ctx.session.recharge?.country) {
     ctx.session.step = "recharge_operator";
-    await ctx.editMessageText(
-      `Who is your ${country?.name ?? ""} mobile operator?`,
+    await safeEdit(
+      ctx,
+      render(copy.operatorPrompt, { country: country?.name ?? "" }),
       { reply_markup: operatorKeyboard(ctx.session.recharge.country) }
     );
   }
