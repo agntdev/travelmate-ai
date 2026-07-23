@@ -1,9 +1,31 @@
 [
   {
-    "name": "Buy eSIM — opens country selection",
+    "name": "Buy eSIM — opens product type selection",
     "steps": [
       {
-        "send": { "callback": "purchase:country_select" },
+        "send": { "callback": "product:select" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "What would you like to buy?" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — selecting eSIM shows country list",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "product:esim" },
         "expect": [
           { "method": "answerCallbackQuery" },
           {
@@ -18,7 +40,14 @@
     "name": "Buy eSIM — selecting a country shows plans",
     "steps": [
       {
-        "send": { "callback": "purchase:country_select" },
+        "send": { "callback": "product:select" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "product:esim" },
         "expect": [
           { "method": "answerCallbackQuery" },
           { "method": "editMessageText" }
@@ -30,17 +59,24 @@
           { "method": "answerCallbackQuery" },
           {
             "method": "editMessageText",
-            "payload": { "text": "🇯🇵 Japan — pick a plan:" }
+            "payload": { "text": "🇯🇵 Japan — available plans:\n\nChoose a plan below:" }
           }
         ]
       }
     ]
   },
   {
-    "name": "Buy eSIM — selecting a plan shows checkout",
+    "name": "Buy eSIM — selecting a plan shows details and quantity",
     "steps": [
       {
-        "send": { "callback": "purchase:country_select" },
+        "send": { "callback": "product:select" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "product:esim" },
         "expect": [
           { "method": "answerCallbackQuery" },
           { "method": "editMessageText" }
@@ -54,12 +90,277 @@
         ]
       },
       {
-        "send": { "callback": "purchase:plan:jp_1g_7d" },
+        "send": { "callback": "purchase:plan:jp_1g_7d_docomo" },
         "expect": [
           { "method": "answerCallbackQuery" },
           {
             "method": "editMessageText",
-            "payload": { "text": "🇯🇵 Japan — 1 GB — 7 days\nPrice: $4.99\nValidity: 7 days\n\nConfirm your purchase?" }
+            "payload": { "text": "🇯🇵 Japan — NTT Docomo\n\n1 GB — 7 days\nPrice: $4.99\nActivation: Instant\nCompatible: All eSIM devices\nCoverage: 4G/5G nationwide\n\nHow many would you like?" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — selecting quantity asks for travel dates",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:country:JP" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:plan:jp_1g_7d_docomo" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:qty:1" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Great choice! 1 eSIM selected.\n\nWhen does your trip start? (e.g. Aug 15)" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — entering start date asks for end date",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:country:JP" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:plan:jp_1g_7d_docomo" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:qty:1" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "Aug 15" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Trip starts: Aug 15\n\nWhen does your trip end? (e.g. Aug 25)" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — entering end date asks for name",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:country:JP" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:plan:jp_1g_7d_docomo" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:qty:1" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "Aug 15" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Aug 25" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Trip: Aug 15 → Aug 25\n\nAlmost there! Just need a couple of details:\n\nYour name:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — entering name asks for email",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:country:US" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:plan:us_3g_30d_att" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:qty:2" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "Sep 1" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Sep 10" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Alice" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Thanks, Alice!\n\nYour email (for QR code delivery):" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — entering email shows order review",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:country:US" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:plan:us_3g_30d_att" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:qty:1" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "Sep 1" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Sep 10" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Alice" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "alice@example.com" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "📋 Order Review\n\nPlan: AT&T — 3 GB 30 days\nCountry: 🇺🇸 United States\nQuantity: 1\nTravel: Sep 1 → Sep 10\nName: Alice\nEmail: alice@example.com\n\n💰 Breakdown\nBase price: $12.99\nTaxes & fees: $1.30\nTotal: $14.29\n\nReady to pay?" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — checkout shows payment methods",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:country:US" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:plan:us_1g_7d_tmobile" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:qty:1" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "Oct 1" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Oct 5" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "Bob" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "text": "bob@example.com" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "purchase:checkout" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Choose a payment method:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Buy eSIM — cancel clears the flow",
+    "steps": [
+      {
+        "send": { "callback": "product:select" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "product:esim" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "purchase:cancel" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "No worries — your order was cancelled. Tap a button below to do something else." }
           }
         ]
       }

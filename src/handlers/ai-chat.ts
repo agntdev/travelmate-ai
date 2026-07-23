@@ -20,15 +20,21 @@ const TRAVEL_TIPS: Record<string, string> = {
   health: "Pack basic meds (painkillers, anti-diarrheal, band-aids). Check if you need vaccinations 6 weeks before travel. Travel insurance is essential — don't skip it.",
 };
 
-const TOPIC_BUTTONS = [
-  [inlineButton("🛂 Visa & entry", "ai:topic:visa"), inlineButton("💱 Currency", "ai:topic:currency")],
-  [inlineButton("🔒 Safety", "ai:topic:safety"), inlineButton("🍜 Food", "ai:topic:food")],
-  [inlineButton("🚌 Transport", "ai:topic:transport"), inlineButton("🎒 Packing", "ai:topic:packing")],
-  [inlineButton("💰 Budget", "ai:topic:budget"), inlineButton("📶 Connectivity", "ai:topic:connectivity")],
-  [inlineButton("💊 Health", "ai:topic:health")],
-];
+function topicKeyboard() {
+  return inlineKeyboard([
+    [inlineButton("🛂 Visa & entry", "ai:topic:visa"), inlineButton("💱 Currency", "ai:topic:currency")],
+    [inlineButton("🔒 Safety", "ai:topic:safety"), inlineButton("🍜 Food", "ai:topic:food")],
+    [inlineButton("🚌 Transport", "ai:topic:transport"), inlineButton("🎒 Packing", "ai:topic:packing")],
+    [inlineButton("💰 Budget", "ai:topic:budget"), inlineButton("📶 Connectivity", "ai:topic:connectivity")],
+    [inlineButton("💊 Health", "ai:topic:health")],
+    [inlineButton("👨‍💼 Talk to human", "ai:escalate")],
+    [inlineButton("⬅️ Back to menu", "menu:main")],
+  ]);
+}
 
-const backToMenu = inlineKeyboard([[inlineButton("⬅️ Back to menu", "menu:main")]]);
+function backToMenuKeyboard() {
+  return inlineKeyboard([[inlineButton("⬅️ Back to menu", "menu:main")]]);
+}
 
 const composer = new Composer<Ctx>();
 
@@ -37,7 +43,7 @@ composer.callbackQuery("ai:chat", async (ctx) => {
   ctx.session.step = "ai_chat";
   await ctx.editMessageText(
     "What can I help you with?\n\nPick a topic below, or just type your travel question.",
-    { reply_markup: inlineKeyboard([...TOPIC_BUTTONS, [inlineButton("⬅️ Back to menu", "menu:main")]]) },
+    { reply_markup: topicKeyboard() },
   );
 });
 
@@ -47,16 +53,44 @@ composer.callbackQuery(/^ai:topic:(.+)$/, async (ctx) => {
   const answer = TRAVEL_TIPS[topic];
   if (!answer) {
     await ctx.editMessageText("I don't have info on that yet. Try another topic or type your question.", {
-      reply_markup: inlineKeyboard([...TOPIC_BUTTONS, [inlineButton("⬅️ Back to menu", "menu:main")]]),
+      reply_markup: topicKeyboard(),
     });
     return;
   }
   await ctx.editMessageText(answer, {
-    reply_markup: inlineKeyboard([
-      ...TOPIC_BUTTONS,
-      [inlineButton("⬅️ Back to menu", "menu:main")],
-    ]),
+    reply_markup: topicKeyboard(),
   });
+});
+
+// Human escalation
+composer.callbackQuery("ai:escalate", async (ctx) => {
+  await ctx.answerCallbackQuery();
+  const query = ctx.callbackQuery.message?.text ?? "General inquiry";
+
+  // Create support ticket in session (durable storage)
+  if (!ctx.session.tickets) ctx.session.tickets = [];
+  const ticketId = `TKT-${Date.now().toString(36).toUpperCase()}`;
+  ctx.session.tickets.push({
+    id: ticketId,
+    query,
+    status: "open",
+    createdAt: new Date().toISOString(),
+  });
+
+  ctx.session.step = "idle";
+  await ctx.editMessageText(
+    `✅ Support request created\n\n` +
+    `Ticket: ${ticketId}\n\n` +
+    `A human agent will review your request and get back to you soon. ` +
+    `You'll receive a message when an agent is assigned.\n\n` +
+    `In the meantime, you can browse our travel topics for quick answers.`,
+    {
+      reply_markup: inlineKeyboard([
+        [inlineButton("💬 Browse topics", "ai:chat")],
+        [inlineButton("⬅️ Back to menu", "menu:main")],
+      ]),
+    }
+  );
 });
 
 composer.on("message:text", async (ctx, next) => {
@@ -73,13 +107,13 @@ composer.on("message:text", async (ctx, next) => {
 
   if (matched) {
     await ctx.reply(matched, {
-      reply_markup: inlineKeyboard([...TOPIC_BUTTONS, [inlineButton("⬅️ Back to menu", "menu:main")]]),
+      reply_markup: topicKeyboard(),
     });
   } else {
     await ctx.reply(
       "Thanks for your question! I'm best with travel topics like visas, safety, food, transport, and budget tips.\n\n" +
       "Pick a topic below for quick answers, or rephrase your question.",
-      { reply_markup: inlineKeyboard([...TOPIC_BUTTONS, [inlineButton("⬅️ Back to menu", "menu:main")]]) },
+      { reply_markup: topicKeyboard() },
     );
   }
 });

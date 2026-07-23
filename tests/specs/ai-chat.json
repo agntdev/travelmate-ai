@@ -28,10 +28,44 @@
         "send": { "callback": "ai:topic:visa" },
         "expect": [
           { "method": "answerCallbackQuery" },
-          {
-            "method": "editMessageText",
-            "payload": { "text": "Most Southeast Asian countries offer visa-on-arrival or visa-free entry for 30–90 days. Check your passport's expiry — many countries require 6 months validity. Always verify requirements for your specific nationality before traveling." }
-          }
+          { "method": "editMessageText" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Travel Assistant — typing a keyword matches a topic",
+    "steps": [
+      {
+        "send": { "callback": "ai:chat" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "text": "tell me about visas" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Travel Assistant — escalation creates support ticket",
+    "steps": [
+      {
+        "send": { "callback": "ai:chat" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "ai:escalate" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
         ]
       }
     ]

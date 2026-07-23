@@ -15,7 +15,7 @@
     ]
   },
   {
-    "name": "Mobile Recharge — selecting a country prompts for phone number",
+    "name": "Mobile Recharge — selecting a country prompts for operator",
     "steps": [
       {
         "send": { "callback": "recharge:start" },
@@ -30,7 +30,145 @@
           { "method": "answerCallbackQuery" },
           {
             "method": "editMessageText",
-            "payload": { "text": "Enter your 🇮🇳 India mobile number:" }
+            "payload": { "text": "Who is your 🇮🇳 India mobile operator?" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mobile Recharge — selecting operator asks for phone number",
+    "steps": [
+      {
+        "send": { "callback": "recharge:start" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:country:IN" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:operator:jio" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Enter your Jio mobile number:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mobile Recharge — entering phone shows amounts",
+    "steps": [
+      {
+        "send": { "callback": "recharge:start" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:country:IN" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:operator:jio" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "+911234567890" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Pick a top-up amount:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mobile Recharge — selecting amount shows confirmation",
+    "steps": [
+      {
+        "send": { "callback": "recharge:start" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:country:IN" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:operator:jio" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "+911234567890" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "recharge:amount:₹200" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "📋 Recharge Summary\n\nCountry: 🇮🇳 India\nOperator: Jio\nPhone: +911234567890\nAmount: ₹200\n\nConfirm this recharge?" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mobile Recharge — confirm completes payment",
+    "steps": [
+      {
+        "send": { "callback": "recharge:start" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:country:IN" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:operator:jio" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "text": "+911234567890" },
+        "expect": [{ "method": "sendMessage" }]
+      },
+      {
+        "send": { "callback": "recharge:amount:₹500" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:pay:yes" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "✅ Recharge successful!\n\n₹500 has been sent to +911234567890 (Jio).\n\nYou'll receive a confirmation SMS from your operator shortly.\n\nNeed help with anything else?" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Mobile Recharge — cancel clears the flow",
+    "steps": [
+      {
+        "send": { "callback": "recharge:start" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:country:US" },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "recharge:pay:no" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Recharge cancelled. Tap a button below to do something else." }
           }
         ]
       }

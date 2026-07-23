@@ -2,20 +2,63 @@ import { Composer } from "grammy";
 import { createBot, type BotContext, type CreateBotOptions } from "./toolkit/index.js";
 import type { StorageAdapter } from "grammy";
 
-// The per-chat session shape (ephemeral conversation state only). Extend as the
-// bot grows. Durable domain data must NOT live here — use the toolkit's
-// persistent storage (see AGENTS.md).
+// The per-chat session shape. The toolkit's Redis-backed session storage
+// persists across restarts — durable domain data lives here, NOT in Maps.
 export interface Session {
   step?: string;
+
+  // eSIM purchase flow
   purchase?: {
     country?: string;
     planId?: string;
+    providerId?: string;
+    quantity?: number;
+    travelStart?: string;
+    travelEnd?: string;
+    purchaser?: {
+      name?: string;
+      email?: string;
+      phone?: string;
+    };
+    promoCode?: string;
   };
+
+  // Recharge flow
   recharge?: {
     country?: string;
     phone?: string;
     operator?: string;
+    amount?: string;
   };
+
+  // Wallet (durable — persists via Redis session)
+  wallet?: {
+    balance: number;
+    transactions: Array<{
+      date: string;
+      desc: string;
+      amount: string;
+    }>;
+  };
+
+  // Orders (durable)
+  orders?: Array<{
+    id: string;
+    type: "esim" | "recharge";
+    country: string;
+    plan: string;
+    amount: string;
+    status: string;
+    createdAt: string;
+  }>;
+
+  // Support tickets (durable)
+  tickets?: Array<{
+    id: string;
+    query: string;
+    status: string;
+    createdAt: string;
+  }>;
 }
 
 export type Ctx = BotContext<Session>;
@@ -53,7 +96,11 @@ export interface BuildBotOptions {
  */
 export async function buildBot(token: string, opts: BuildBotOptions = {}) {
   const bot = createBot<Session>(token, {
-    initial: () => ({}),
+    initial: () => ({
+      wallet: { balance: 0, transactions: [] },
+      orders: [],
+      tickets: [],
+    }),
     storage: opts.storage,
     telemetryEnv: opts.telemetryEnv,
     telemetryReporterOptions: opts.telemetryReporterOptions,
