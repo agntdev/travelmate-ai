@@ -5,7 +5,7 @@ import {
   inlineButton,
   inlineKeyboard,
 } from "../toolkit/index.js";
-import { aiAssistant as copy } from "../i18n/en.js";
+import { aiAssistant as copy, render } from "../i18n/en.js";
 
 registerMainMenuItem({ label: "💬 Travel Assistant", data: "ai:chat", order: 30 });
 
@@ -100,11 +100,7 @@ composer.callbackQuery("ai:escalate", async (ctx) => {
   ctx.session.step = "idle";
   await safeEdit(
     ctx,
-    `${copy.escalateTitle}\n\n` +
-    `Ticket: ${ticketId}\n\n` +
-    `A human agent will review your request and get back to you soon. ` +
-    `You'll receive a message when an agent is assigned.\n\n` +
-    `In the meantime, you can browse our travel topics for quick answers.`,
+    `${copy.escalateTitle}\n\n` + render(copy.escalateTicket, { ticket_id: ticketId }),
     {
       reply_markup: inlineKeyboard([
         [inlineButton(copy.escalateBrowse, "ai:chat")],
