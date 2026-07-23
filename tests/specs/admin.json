@@ -1,0 +1,159 @@
+[
+  {
+    "name": "/admin for non-admin shows not authorized",
+    "steps": [
+      {
+        "send": { "text": "/admin", "userId": 999 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Not authorized." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin button and menu for admin",
+    "steps": [
+      {
+        "send": { "text": "/start", "userId": 1 },
+        "expect": [ { "method": "sendMessage" } ]
+      },
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText", "payload": { "text": "🛠 Admin Panel\nChoose a section:" } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin dashboard shows metrics",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:dashboard", "userId": 1 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText", "payload": { "text": "📊 Dashboard\n\nSales today: 0.00\nLast 7d: 0.00\nLast 30d: 0.00\nActive eSIMs: 0\nPending orders: 0\nFailed payments: 0" } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin orders list and detail",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [{ "method": "answerCallbackQuery" }, { "method": "editMessageText" }]
+      },
+      {
+        "send": { "callback": "admin:orders", "userId": 1 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText", "payload": { "text": "No orders found." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin users list",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:users", "userId": 1 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin providers list and create flow",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:providers", "userId": 1 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText", "payload": { "text": "🔌 Providers" } }
+        ]
+      },
+      {
+        "send": { "callback": "admin:prov:create", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "text": "TestProv", "userId": 1 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Provider created." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin broadcasts preview and rate limit",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:broadcasts", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:bc:preview", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      }
+    ]
+  },
+  {
+    "name": "admin settings and add admin (owner)",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:settings", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:set:addadmin", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "text": "42", "userId": 1 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Admin added. Access immediate." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin audit view",
+    "steps": [
+      {
+        "send": { "callback": "admin:menu", "userId": 1 },
+        "expect": [ { "method": "answerCallbackQuery" }, { "method": "editMessageText" } ]
+      },
+      {
+        "send": { "callback": "admin:audit", "userId": 1 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          { "method": "editMessageText" }
+        ]
+      }
+    ]
+  }
+]
