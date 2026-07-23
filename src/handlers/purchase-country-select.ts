@@ -6,6 +6,7 @@ import {
   inlineKeyboard,
   confirmKeyboard,
 } from "../toolkit/index.js";
+import { purchase as copy, buttons as btn, render } from "../i18n/en.js";
 
 registerMainMenuItem({ label: "🛒 Buy eSIM", data: "purchase:country_select", order: 10 });
 
@@ -183,8 +184,8 @@ function planKeyboard(countryCode: string) {
 
 function activationKeyboard() {
   return inlineKeyboard([
-    [inlineButton("⚡ Immediate", "purchase:activation:immediate")],
-    [inlineButton("📅 Scheduled", "purchase:activation:scheduled")],
+    [inlineButton(copy.activationImmediate, "purchase:activation:immediate")],
+    [inlineButton(copy.activationScheduled, "purchase:activation:scheduled")],
     [inlineButton("⬅️ Back to plans", "purchase:back:plans")],
   ]);
 }
@@ -203,7 +204,7 @@ function quantityKeyboard() {
 
 function paymentMethodKeyboard() {
   return inlineKeyboard([
-    [inlineButton("💳 Card", "purchase:pay:card"), inlineButton("📱 UPI", "purchase:pay:upi")],
+    [inlineButton(copy.paymentCard, "purchase:pay:card"), inlineButton(copy.paymentUpi, "purchase:pay:upi")],
     [inlineButton("⬅️ Back to review", "purchase:back:review")],
   ]);
 }
@@ -221,8 +222,8 @@ function supportKeyboard() {
 
 function postSuccessKeyboard() {
   return inlineKeyboard([
-    [inlineButton("🆕 Buy another eSIM", "purchase:country_select")],
-    [inlineButton("💬 Need help?", "ai:chat")],
+    [inlineButton(copy.buyAnother, "purchase:country_select")],
+    [inlineButton(copy.needHelp, "ai:chat")],
     [inlineButton("⬅️ Back to menu", "menu:main")],
   ]);
 }
@@ -230,7 +231,7 @@ function postSuccessKeyboard() {
 function errorKeyboard() {
   return inlineKeyboard([
     [inlineButton("🔄 Try again", "purchase:checkout")],
-    [inlineButton("💳 Change payment method", "purchase:pay_methods")],
+    [inlineButton(btn.changePaymentMethod, "purchase:pay_methods")],
     [inlineButton("💬 Contact support", "ai:chat")],
     [inlineButton("⬅️ Back to menu", "menu:main")],
   ]);
@@ -265,7 +266,7 @@ composer.command("buy", async (ctx) => {
   emitEvent({ type: "purchase_started", userId: ctx.from?.id ?? 0 });
   ctx.session.step = "esim_country";
   ctx.session.purchase = {};
-  await ctx.reply("Where are you traveling? Pick a country to see available eSIM plans.", {
+  await ctx.reply(copy.countryPrompt, {
     reply_markup: countryKeyboard(),
   });
 });
@@ -276,7 +277,7 @@ composer.callbackQuery("purchase:country_select", async (ctx) => {
   emitEvent({ type: "purchase_started", userId: ctx.from?.id ?? 0 });
   ctx.session.step = "esim_country";
   ctx.session.purchase = {};
-  await safeEdit(ctx, "Where are you traveling? Pick a country to see available eSIM plans.", {
+  await safeEdit(ctx, copy.countryPrompt, {
     reply_markup: countryKeyboard(),
   });
 });
@@ -287,7 +288,7 @@ composer.callbackQuery("product:select", async (ctx) => {
   emitEvent({ type: "purchase_started", userId: ctx.from?.id ?? 0 });
   ctx.session.step = "esim_country";
   ctx.session.purchase = {};
-  await safeEdit(ctx, "Where are you traveling? Pick a country to see available eSIM plans.", {
+  await safeEdit(ctx, copy.countryPrompt, {
     reply_markup: countryKeyboard(),
   });
 });
@@ -299,14 +300,14 @@ composer.callbackQuery(/^purchase:country:(.+)$/, async (ctx) => {
   const code = ctx.match[1];
   const country = COUNTRIES.find((c) => c.code === code);
   if (!country) {
-    await safeEdit(ctx, "Country not found. Try again.", { reply_markup: countryKeyboard() });
+    await safeEdit(ctx, copy.countryNotFound, { reply_markup: countryKeyboard() });
     return;
   }
   ctx.session.purchase = { country: code };
   ctx.session.step = "esim_plan";
   await safeEdit(
     ctx,
-    `${country.name} — available plans:\n\nChoose a plan below:`,
+    render(copy.planList, { country: country.name }),
     { reply_markup: planKeyboard(code) }
   );
 });
@@ -318,7 +319,7 @@ composer.callbackQuery(/^purchase:plan:(.+)$/, async (ctx) => {
   const planId = ctx.match[1];
   const result = findPlan(planId);
   if (!result || !ctx.session.purchase?.country) {
-    await safeEdit(ctx, "Something went wrong. Start again.", {
+    await safeEdit(ctx, copy.somethingWrong, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -332,14 +333,17 @@ composer.callbackQuery(/^purchase:plan:(.+)$/, async (ctx) => {
 
   await safeEdit(
     ctx,
-    `${country.name} — ${plan.provider}\n\n` +
-    `${plan.data} — ${plan.validity}\n` +
-    `Price: ${plan.price}\n` +
-    `Rating: ${plan.rating} ⭐\n` +
-    `Activation: ${plan.activation}\n` +
-    `Compatible: ${plan.compatible}\n` +
-    `Coverage: ${plan.coverage}\n\n` +
-    `When would you like to activate this eSIM?`,
+    render(copy.planDetail, {
+      country: country.name,
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      price: plan.price,
+      rating: plan.rating,
+      activation: plan.activation,
+      compatible: plan.compatible,
+      coverage: plan.coverage,
+    }),
     { reply_markup: activationKeyboard() }
   );
 });
@@ -356,7 +360,7 @@ composer.callbackQuery(/^purchase:activation:(.+)$/, async (ctx) => {
     ctx.session.step = "esim_dates";
     await safeEdit(
       ctx,
-      `When does your trip start? (e.g. Aug 15)`,
+      copy.datePromptStart,
       {
         reply_markup: inlineKeyboard([
           [inlineButton("⬅️ Back to activation", "purchase:back:activation")],
@@ -372,11 +376,13 @@ composer.callbackQuery(/^purchase:activation:(.+)$/, async (ctx) => {
 
   await safeEdit(
     ctx,
-    `${country.name} — ${plan.provider}\n\n` +
-    `${plan.data} — ${plan.validity}\n` +
-    `Price: ${plan.price}\n` +
-    `Activation: Immediate\n\n` +
-    `How many would you like?`,
+    render(copy.quantityPrompt, {
+      country: country.name,
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      price: plan.price,
+    }),
     { reply_markup: quantityKeyboard() }
   );
 });
@@ -387,13 +393,13 @@ composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "esim_dates") return next();
   const text = ctx.message.text.trim();
   if (text.length < 3) {
-    await ctx.reply("Please enter a date (e.g. Aug 15).");
+    await ctx.reply(copy.dateTooShort);
     return;
   }
   ctx.session.purchase!.travelStart = text;
   ctx.session.step = "esim_dates_end";
   await ctx.reply(
-    `Trip starts: ${text}\n\nWhen does your trip end? (e.g. Aug 25)`,
+    render(copy.datePromptEnd, { start: text }),
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to start date", "purchase:back:dates_start")],
@@ -417,11 +423,15 @@ composer.on("message:text", async (ctx, next) => {
   const { plan, country } = result;
 
   await ctx.reply(
-    `${country.name} — ${plan.provider}\n\n` +
-    `${plan.data} — ${plan.validity}\n` +
-    `Price: ${plan.price}\n` +
-    `Activation: ${ctx.session.purchase!.travelStart} → ${text}\n\n` +
-    `How many would you like?`,
+    render(copy.quantityPromptScheduled, {
+      country: country.name,
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      price: plan.price,
+      start: ctx.session.purchase!.travelStart!,
+      end: text,
+    }),
     { reply_markup: quantityKeyboard() }
   );
 });
@@ -435,8 +445,10 @@ composer.callbackQuery(/^purchase:qty:(\d+)$/, async (ctx) => {
   ctx.session.step = "esim_info_email";
   await safeEdit(
     ctx,
-    `Great choice! ${qty} eSIM${qty > 1 ? "s" : ""} selected.\n\n` +
-    `Your email (for QR code delivery):`,
+    render(copy.quantitySelected, {
+      qty: String(qty),
+      plural: qty > 1 ? "s" : "",
+    }),
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to quantity", "purchase:back:quantity")],
@@ -451,17 +463,16 @@ composer.on("message:text", async (ctx, next) => {
   if (ctx.session.step !== "esim_info_email") return next();
   const email = ctx.message.text.trim();
   if (!email.includes("@")) {
-    await ctx.reply("Please enter a valid email address.");
+    await ctx.reply(copy.emailInvalid);
     return;
   }
   ctx.session.purchase!.purchaser = { email };
   ctx.session.step = "esim_info_phone";
   await ctx.reply(
-    `Email saved: ${email}\n\n` +
-    `Phone number (optional — for delivery notifications):`,
+    render(copy.emailSaved, { email }),
     {
       reply_markup: inlineKeyboard([
-        [inlineButton("Skip", "purchase:info_phone:skip")],
+        [inlineButton(copy.phoneSkip, "purchase:info_phone:skip")],
         [inlineButton("⬅️ Back to email", "purchase:back:info_email")],
       ]),
     }
@@ -493,7 +504,7 @@ composer.on("message:text", async (ctx, next) => {
 async function renderReview(ctx: Ctx) {
   const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) {
-    await ctx.reply("Something went wrong. Start again.", {
+    await ctx.reply(copy.somethingWrong, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -507,24 +518,29 @@ async function renderReview(ctx: Ctx) {
 
   ctx.session.step = "esim_review";
 
+  const activationLabel =
+    ctx.session.purchase!.travelStart +
+    (ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : "");
+
   await ctx.reply(
-    `📋 Order Review\n\n` +
-    `Plan: ${plan.provider} — ${plan.data} ${plan.validity}\n` +
-    `Country: ${country.name}\n` +
-    `Quantity: ${qty}\n` +
-    `Activation: ${ctx.session.purchase!.travelStart}${ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : ""}\n` +
-    `Email: ${ctx.session.purchase!.purchaser!.email}\n\n` +
-    `💰 Breakdown\n` +
-    `Base price: $${subtotal.toFixed(2)}\n` +
-    `Taxes & fees: $${taxes.toFixed(2)}\n` +
-    `Total: $${total.toFixed(2)}\n\n` +
-    `Ready to pay?`,
+    render(copy.review, {
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      country: country.name,
+      qty: String(qty),
+      activation: activationLabel,
+      email: ctx.session.purchase!.purchaser!.email!,
+      subtotal: subtotal.toFixed(2),
+      taxes: taxes.toFixed(2),
+      total: total.toFixed(2),
+    }),
     {
       reply_markup: inlineKeyboard([
-        [inlineButton("💳 Confirm and Pay", "purchase:checkout")],
-        [inlineButton("🏷️ Enter promo code", "purchase:promo")],
+        [inlineButton(btn.confirmAndPay, "purchase:checkout")],
+        [inlineButton(btn.enterPromo, "purchase:promo")],
         [inlineButton("⬅️ Back to email", "purchase:back:info_email")],
-        [inlineButton("Cancel", "purchase:cancel")],
+        [inlineButton(copy.cancel, "purchase:cancel")],
       ]),
     }
   );
@@ -537,7 +553,7 @@ composer.callbackQuery("purchase:promo", async (ctx) => {
   ctx.session.step = "esim_promo";
   await safeEdit(
     ctx,
-    "Enter your promo code:",
+    copy.promoPrompt,
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to review", "purchase:back:review")],
@@ -554,7 +570,7 @@ composer.on("message:text", async (ctx, next) => {
 
   const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) {
-    await ctx.reply("Something went wrong. Start again.", {
+    await ctx.reply(copy.somethingWrong, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -568,28 +584,33 @@ composer.on("message:text", async (ctx, next) => {
   const total = subtotal - discount + taxes;
 
   const discountLine = discount > 0
-    ? `Promo (${code.toUpperCase()}): -$${discount.toFixed(2)}\n`
-    : `Promo "${code}" — not a valid code. You can still pay full price.\n`;
+    ? render(copy.promoApplied, { code: code.toUpperCase(), discount: discount.toFixed(2) }) + "\n"
+    : render(copy.promoInvalid, { code }) + "\n";
+
+  const activationLabel =
+    ctx.session.purchase!.travelStart +
+    (ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : "");
 
   await ctx.reply(
-    `📋 Order Review\n\n` +
-    `Plan: ${plan.provider} — ${plan.data} ${plan.validity}\n` +
-    `Country: ${country.name}\n` +
-    `Quantity: ${qty}\n` +
-    `Activation: ${ctx.session.purchase!.travelStart}${ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : ""}\n` +
-    `Email: ${ctx.session.purchase!.purchaser!.email}\n\n` +
-    `💰 Breakdown\n` +
-    `Base price: $${subtotal.toFixed(2)}\n` +
-    discountLine +
-    `Taxes & fees: $${taxes.toFixed(2)}\n` +
-    `Total: $${total.toFixed(2)}\n\n` +
-    `Ready to pay?`,
+    render(copy.reviewWithPromo, {
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      country: country.name,
+      qty: String(qty),
+      activation: activationLabel,
+      email: ctx.session.purchase!.purchaser!.email!,
+      subtotal: subtotal.toFixed(2),
+      discountLine,
+      taxes: taxes.toFixed(2),
+      total: total.toFixed(2),
+    }),
     {
       reply_markup: inlineKeyboard([
-        [inlineButton("💳 Confirm and Pay", "purchase:checkout")],
-        [inlineButton("🏷️ Enter promo code", "purchase:promo")],
+        [inlineButton(btn.confirmAndPay, "purchase:checkout")],
+        [inlineButton(btn.enterPromo, "purchase:promo")],
         [inlineButton("⬅️ Back to email", "purchase:back:info_email")],
-        [inlineButton("Cancel", "purchase:cancel")],
+        [inlineButton(copy.cancel, "purchase:cancel")],
       ]),
     }
   );
@@ -602,7 +623,7 @@ composer.callbackQuery("purchase:checkout", async (ctx) => {
   ctx.session.step = "esim_payment";
   await safeEdit(
     ctx,
-    `Choose a payment method:`,
+    copy.paymentMethods,
     { reply_markup: paymentMethodKeyboard() }
   );
 });
@@ -615,7 +636,7 @@ composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
   const methodName = method === "upi" ? "UPI" : "Card";
   const result = findPlan(ctx.session.purchase?.planId ?? "");
   if (!result) {
-    await safeEdit(ctx, "Session expired. Start again.", {
+    await safeEdit(ctx, copy.sessionExpired, {
       reply_markup: backToMenuKeyboard(),
     });
     return;
@@ -660,11 +681,10 @@ composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
 
   await safeEdit(
     ctx,
-    `✅ Payment received via ${methodName}!\n\n` +
-    `Your eSIM QR code and installation instructions are being sent to ${email ?? "your email"}.\n\n` +
-    `📱 QR Code Delivery\n` +
-    `Check your email for the QR code and step-by-step device-specific installation guide.\n\n` +
-    `Need help with anything else?`,
+    render(copy.paymentSuccess, {
+      method: methodName,
+      email: email ?? "your email",
+    }),
     {
       reply_markup: postSuccessKeyboard(),
     }
@@ -678,7 +698,7 @@ composer.callbackQuery("purchase:cancel", async (ctx) => {
   emitEvent({ type: "purchase_cancelled", userId: ctx.from?.id ?? 0, step: ctx.session.step ?? "unknown" });
   ctx.session.step = "idle";
   ctx.session.purchase = {};
-  await safeEdit(ctx, "No worries — your order was cancelled. Tap a button below to do something else.", {
+  await safeEdit(ctx, copy.cancel, {
     reply_markup: backToMenuKeyboard(),
   });
 });
@@ -689,7 +709,7 @@ composer.callbackQuery("purchase:pay_methods", async (ctx) => {
   ctx.session.step = "esim_payment";
   await safeEdit(
     ctx,
-    `Choose a payment method:`,
+    copy.paymentMethods,
     { reply_markup: paymentMethodKeyboard() }
   );
 });
@@ -704,14 +724,17 @@ composer.callbackQuery("purchase:back:activation", async (ctx) => {
   const { plan, country } = result;
   await safeEdit(
     ctx,
-    `${country.name} — ${plan.provider}\n\n` +
-    `${plan.data} — ${plan.validity}\n` +
-    `Price: ${plan.price}\n` +
-    `Rating: ${plan.rating} ⭐\n` +
-    `Activation: ${plan.activation}\n` +
-    `Compatible: ${plan.compatible}\n` +
-    `Coverage: ${plan.coverage}\n\n` +
-    `When would you like to activate this eSIM?`,
+    render(copy.planDetail, {
+      country: country.name,
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      price: plan.price,
+      rating: plan.rating,
+      activation: plan.activation,
+      compatible: plan.compatible,
+      coverage: plan.coverage,
+    }),
     { reply_markup: activationKeyboard() }
   );
 });
@@ -724,11 +747,13 @@ composer.callbackQuery("purchase:back:quantity", async (ctx) => {
   const { plan, country } = result;
   await safeEdit(
     ctx,
-    `${country.name} — ${plan.provider}\n\n` +
-    `${plan.data} — ${plan.validity}\n` +
-    `Price: ${plan.price}\n` +
-    `Activation: ${ctx.session.purchase?.travelStart ?? "Immediate"}\n\n` +
-    `How many would you like?`,
+    render(copy.quantityPrompt, {
+      country: country.name,
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      price: plan.price,
+    }),
     { reply_markup: quantityKeyboard() }
   );
 });
@@ -741,7 +766,7 @@ composer.callbackQuery("purchase:back:plans", async (ctx) => {
   const country = COUNTRIES.find((c) => c.code === code);
   await safeEdit(
     ctx,
-    `${country?.name ?? "Country"} — available plans:\n\nChoose a plan below:`,
+    render(copy.planList, { country: country?.name ?? "Country" }),
     { reply_markup: planKeyboard(code) }
   );
 });
@@ -751,7 +776,7 @@ composer.callbackQuery("purchase:back:dates_start", async (ctx) => {
   ctx.session.step = "esim_dates";
   await safeEdit(
     ctx,
-    `When does your trip start? (e.g. Aug 15)`,
+    copy.datePromptStart,
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to activation", "purchase:back:activation")],
@@ -765,7 +790,7 @@ composer.callbackQuery("purchase:back:info_email", async (ctx) => {
   ctx.session.step = "esim_info_email";
   await safeEdit(
     ctx,
-    `Your email (for QR code delivery):`,
+    copy.emailPrompt,
     {
       reply_markup: inlineKeyboard([
         [inlineButton("⬅️ Back to quantity", "purchase:back:quantity")],
@@ -786,25 +811,30 @@ composer.callbackQuery("purchase:back:review", async (ctx) => {
   const total = subtotal + taxes;
   ctx.session.step = "esim_review";
 
+  const activationLabel =
+    ctx.session.purchase!.travelStart +
+    (ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : "");
+
   await safeEdit(
     ctx,
-    `📋 Order Review\n\n` +
-    `Plan: ${plan.provider} — ${plan.data} ${plan.validity}\n` +
-    `Country: ${country.name}\n` +
-    `Quantity: ${qty}\n` +
-    `Activation: ${ctx.session.purchase!.travelStart}${ctx.session.purchase!.travelEnd ? ` → ${ctx.session.purchase!.travelEnd}` : ""}\n` +
-    `Email: ${ctx.session.purchase!.purchaser!.email}\n\n` +
-    `💰 Breakdown\n` +
-    `Base price: $${subtotal.toFixed(2)}\n` +
-    `Taxes & fees: $${taxes.toFixed(2)}\n` +
-    `Total: $${total.toFixed(2)}\n\n` +
-    `Ready to pay?`,
+    render(copy.review, {
+      provider: plan.provider,
+      data: plan.data,
+      validity: plan.validity,
+      country: country.name,
+      qty: String(qty),
+      activation: activationLabel,
+      email: ctx.session.purchase!.purchaser!.email!,
+      subtotal: subtotal.toFixed(2),
+      taxes: taxes.toFixed(2),
+      total: total.toFixed(2),
+    }),
     {
       reply_markup: inlineKeyboard([
-        [inlineButton("💳 Confirm and Pay", "purchase:checkout")],
-        [inlineButton("🏷️ Enter promo code", "purchase:promo")],
+        [inlineButton(btn.confirmAndPay, "purchase:checkout")],
+        [inlineButton(btn.enterPromo, "purchase:promo")],
         [inlineButton("⬅️ Back to email", "purchase:back:info_email")],
-        [inlineButton("Cancel", "purchase:cancel")],
+        [inlineButton(copy.cancel, "purchase:cancel")],
       ]),
     }
   );
