@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Travel Assistant",
+    "steps": [
+      {
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Open AI-powered travel help interface"
+            }
+          }
+        ],
+        "send": {
+          "callback": "ai:chat"
+        }
+      }
+    ]
+  }
+]
