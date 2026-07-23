@@ -6,7 +6,9 @@ import {
   paginate,
 } from "../toolkit/index.js";
 import { admin as copy, render } from "../i18n/en.js";
-import { store, ensureUser, type OrderRec, type UserRec } from "../store.js";
+import { store, ensureUser, type UserRec } from "../store.js";
+import { safeAnswer, safeEdit } from "../safe-api.js";
+import { now } from "../clock.js";
 
 const composer = new Composer<Ctx>();
 
@@ -27,18 +29,6 @@ async function isAdmin(id?: number): Promise<boolean> {
   if (id === OWNER_ID) return true;
   const admins = await getAdmins();
   return admins.includes(id);
-}
-
-async function safeAnswer(ctx: Ctx, text?: string) {
-  try {
-    await ctx.answerCallbackQuery(text ? { text } : undefined);
-  } catch {}
-}
-
-async function safeEdit(ctx: Ctx, text: string, extra?: any) {
-  try {
-    await ctx.editMessageText(text, extra);
-  } catch {}
 }
 
 function adminMenuKeyboard() {
@@ -85,11 +75,11 @@ composer.callbackQuery(/^admin:/, async (ctx, next) => {
 composer.callbackQuery("admin:dashboard", async (ctx) => {
   await safeAnswer(ctx);
   const orders = await store.getOrders();
-  const now = Date.now();
+  const t = now();
   const day = 86400000;
-  const today = orders.filter(o => now - new Date(o.createdAt).getTime() < day && (o.status === "paid" || o.status === "refunded")).reduce((s, o) => s + parseAmount(o.amount), 0);
-  const w7 = orders.filter(o => now - new Date(o.createdAt).getTime() < 7 * day && (o.status === "paid")).reduce((s, o) => s + parseAmount(o.amount), 0);
-  const w30 = orders.filter(o => now - new Date(o.createdAt).getTime() < 30 * day && (o.status === "paid")).reduce((s, o) => s + parseAmount(o.amount), 0);
+  const today = orders.filter(o => t - new Date(o.createdAt).getTime() < day && (o.status === "paid" || o.status === "refunded")).reduce((s, o) => s + parseAmount(o.amount), 0);
+  const w7 = orders.filter(o => t - new Date(o.createdAt).getTime() < 7 * day && (o.status === "paid")).reduce((s, o) => s + parseAmount(o.amount), 0);
+  const w30 = orders.filter(o => t - new Date(o.createdAt).getTime() < 30 * day && (o.status === "paid")).reduce((s, o) => s + parseAmount(o.amount), 0);
   const active = orders.filter(o => o.status === "paid" && o.type === "esim").length;
   const pending = orders.filter(o => o.status === "pending").length;
   const failed = orders.filter(o => o.status === "failed").length;
@@ -246,8 +236,22 @@ composer.callbackQuery(/^admin:do:(refund|cancel):(.+)$/, async (ctx) => {
   await safeAnswer(ctx);
   const [, act, id] = ctx.match;
   const newStatus = act === "refund" ? "refunded" : "cancelled";
-  const before = await store.updateOrder(id, { status: newStatus as any });
-  await store.addAudit({ adminId: ctx.from?.id ?? 0, action: `order_${act}`, target: id, before, after: { status: newStatus } });
+  const before = await store.getOrder(id);
+  const updated = await store.updateOrder(id, { status: newStatus as any });
+  // Chargeback / refund: credit the wallet so the ledger rolls back cleanly.
+  if (act === "refund" && before && before.status === "paid") {
+    const credit = parseAmount(before.amount);
+    if (credit > 0) {
+      await store.addCredit(before.userId, credit, `Refund ${id}`);
+    }
+  }
+  await store.addAudit({
+    adminId: ctx.from?.id ?? 0,
+    action: `order_${act}`,
+    target: id,
+    before,
+    after: updated,
+  });
   await safeEdit(ctx, `Order ${id} ${newStatus}. ${copy.actionDone}`, { reply_markup: backToAdmin() });
 });
 
@@ -390,7 +394,6 @@ composer.callbackQuery(/^admin:prov:test:(.+)$/, async (ctx) => {
 });
 
 // ── Broadcasts ───────────────────────────────────────────────────────────────
-let lastBroadcastTs = 0;
 
 composer.callbackQuery("admin:broadcasts", async (ctx) => {
   await safeAnswer(ctx);
@@ -413,17 +416,19 @@ composer.callbackQuery("admin:bc:compose", async (ctx) => {
 
 composer.callbackQuery("admin:bc:preview", async (ctx) => {
   await safeAnswer(ctx);
-  await safeEdit(ctx, "Preview: [Your message here]\nSegment: all", { reply_markup: backToAdmin() });
+  const draft = (ctx.session as any).bcText as string | undefined;
+  await safeEdit(ctx, `Preview: ${draft || "[Your message here]"}\nSegment: all`, { reply_markup: backToAdmin() });
 });
 
 composer.callbackQuery("admin:bc:send", async (ctx) => {
   await safeAnswer(ctx);
-  const now = Date.now();
-  if (now - lastBroadcastTs < 30000) {
+  const settings = await store.getSettings();
+  if (now() - (settings.lastBroadcastTs || 0) < 30000) {
     await safeEdit(ctx, copy.rateLimit, { reply_markup: backToAdmin() });
     return;
   }
-  await safeEdit(ctx, render(copy.confirmBroadcast, { count: "42" }), {
+  const users = await store.getUsers();
+  await safeEdit(ctx, render(copy.confirmBroadcast, { count: String(users.length || 0) }), {
     reply_markup: inlineKeyboard([
       [inlineButton(copy.confirm, "admin:do:bc:send"), inlineButton(copy.cancel, "admin:broadcasts")],
     ]),
@@ -432,11 +437,31 @@ composer.callbackQuery("admin:bc:send", async (ctx) => {
 
 composer.callbackQuery("admin:do:bc:send", async (ctx) => {
   await safeAnswer(ctx);
-  lastBroadcastTs = Date.now();
-  const b: any = { id: "BC-" + Date.now().toString(36), text: "demo", status: "sent", createdBy: ctx.from?.id ?? 0 };
+  const settings = await store.getSettings();
+  settings.lastBroadcastTs = now();
+  await store.saveSettings(settings);
+
+  const text = ((ctx.session as any).bcText as string | undefined) || "TravelMate update";
+  const users = await store.getUsers();
+  // DM each user who has started the bot; tolerate 403 without aborting the loop.
+  for (const u of users) {
+    if (u.blocked) continue;
+    try {
+      await ctx.api.sendMessage(u.id, text);
+    } catch {
+      // User never started / blocked the bot — skip.
+    }
+  }
+
+  const b = {
+    id: "BC-" + now().toString(36),
+    text,
+    status: "sent" as const,
+    createdBy: ctx.from?.id ?? 0,
+  };
   await store.saveBroadcast(b);
   await store.addAudit({ adminId: ctx.from?.id ?? 0, action: "broadcast_send", target: b.id });
-  await safeEdit(ctx, "Broadcast sent (sim).", { reply_markup: backToAdmin() });
+  await safeEdit(ctx, `Broadcast sent to ${users.length} users.`, { reply_markup: backToAdmin() });
 });
 
 composer.callbackQuery("admin:bc:cancel", async (ctx) => {
@@ -447,7 +472,8 @@ composer.callbackQuery("admin:bc:cancel", async (ctx) => {
 // ── Settings ─────────────────────────────────────────────────────────────────
 composer.callbackQuery("admin:settings", async (ctx) => {
   await safeAnswer(ctx);
-  const test = "off";
+  const settings = await store.getSettings();
+  const test = settings.testMode ? "on" : "off";
   const text = render(copy.settingsTitle, { test });
   await safeEdit(ctx, text, {
     reply_markup: inlineKeyboard([
@@ -460,8 +486,20 @@ composer.callbackQuery("admin:settings", async (ctx) => {
 
 composer.callbackQuery("admin:set:test", async (ctx) => {
   await safeAnswer(ctx);
-  await store.addAudit({ adminId: ctx.from?.id ?? 0, action: "toggle_test", target: "settings" });
-  await safeEdit(ctx, "Test mode toggled (sim).", { reply_markup: backToAdmin() });
+  const settings = await store.getSettings();
+  settings.testMode = !settings.testMode;
+  await store.saveSettings(settings);
+  await store.addAudit({
+    adminId: ctx.from?.id ?? 0,
+    action: "toggle_test",
+    target: "settings",
+    after: { testMode: settings.testMode },
+  });
+  await safeEdit(
+    ctx,
+    `Test mode is now ${settings.testMode ? "on" : "off"}.`,
+    { reply_markup: backToAdmin() },
+  );
 });
 
 composer.callbackQuery(/^admin:set:(addadmin|rmadmin)$/, async (ctx) => {
@@ -559,7 +597,16 @@ composer.on("message:text", async (ctx, next) => {
     const id = Number(step.split(":")[1]);
     (ctx.session as any).step = "idle";
     await store.addAudit({ adminId: uid, action: "msg_user", target: String(id) });
-    await ctx.reply(`(sim) Message sent to ${id}: ${text}`, { reply_markup: backToAdmin() });
+    // Only users who have started the bot can be messaged; tolerate 403.
+    try {
+      await ctx.api.sendMessage(id, text);
+      await ctx.reply(`Message delivered to ${id}.`, { reply_markup: backToAdmin() });
+    } catch {
+      await ctx.reply(
+        "Couldn't deliver that message — they may not have started the bot yet. Share an invite link instead.",
+        { reply_markup: backToAdmin() },
+      );
+    }
     return;
   }
   if (step === "admin_bc_text") {

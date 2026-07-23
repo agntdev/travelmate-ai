@@ -95,6 +95,13 @@ export interface BuildBotOptions {
  * build-time manifest because Workers has no filesystem.
  */
 export async function buildBot(token: string, opts: BuildBotOptions = {}) {
+  // Isolate durable in-memory state when the harness builds a fresh bot per
+  // dialog spec — without this, orders from earlier specs leak into /wallet.
+  if (!opts.storage && !(typeof process !== "undefined" && process.env.REDIS_URL)) {
+    const { _resetStoreForTests } = await import("./store.js");
+    _resetStoreForTests();
+  }
+
   const bot = createBot<Session>(token, {
     initial: () => ({
       wallet: { balance: 0, transactions: [] },

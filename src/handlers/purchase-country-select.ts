@@ -8,6 +8,9 @@ import {
 } from "../toolkit/index.js";
 import { purchase as copy, buttons as btn, render } from "../i18n/en.js";
 import { store, ensureUser } from "../store.js";
+import { safeAnswer, safeEdit } from "../safe-api.js";
+import { now, nowIso } from "../clock.js";
+import { processPayment, buildEsimQrPayload } from "../payments.js";
 
 registerMainMenuItem({ label: "🛒 Buy eSIM", data: "purchase:country_select", order: 10 });
 
@@ -236,24 +239,6 @@ function errorKeyboard() {
     [inlineButton("💬 Contact support", "ai:chat")],
     [inlineButton("⬅️ Back to menu", "menu:main")],
   ]);
-}
-
-// ── Safe API helpers ──────────────────────────────────────────────────────────
-
-async function safeAnswer(ctx: Ctx) {
-  try {
-    await ctx.answerCallbackQuery();
-  } catch {
-    // Query too old or invalid — ignore silently.
-  }
-}
-
-async function safeEdit(ctx: Ctx, text: string, extra?: Record<string, unknown>) {
-  try {
-    await ctx.editMessageText(text, extra);
-  } catch {
-    // Message not modified or already deleted — ignore.
-  }
 }
 
 // ── Composer ──────────────────────────────────────────────────────────────────
@@ -633,10 +618,10 @@ composer.callbackQuery("purchase:checkout", async (ctx) => {
 
 composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
   await safeAnswer(ctx);
-  const method = ctx.match[1];
+  const method = ctx.match[1] as "card" | "upi";
   const methodName = method === "upi" ? "UPI" : "Card";
   const result = findPlan(ctx.session.purchase?.planId ?? "");
-  if (!result) {
+  if (!result || !ctx.session.purchase?.planId) {
     await safeEdit(ctx, copy.sessionExpired, {
       reply_markup: backToMenuKeyboard(),
     });
@@ -644,31 +629,83 @@ composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
   }
   const { plan, country } = result;
   const qty = ctx.session.purchase!.quantity ?? 1;
-  const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
-  const total = `$${(parsePrice(plan.price) * qty).toFixed(2)}`;
+  const orderId = `ORD-${now().toString(36).toUpperCase()}`;
+  const unitPrice = parsePrice(plan.price);
+  const promo = ctx.session.purchase?.promoCode?.toUpperCase();
+  const discount = promo === "TRAVEL10" ? Math.round(unitPrice * qty * 0.1 * 100) / 100 : 0;
+  const subtotal = unitPrice * qty - discount;
+  const taxes = Math.round(subtotal * 0.1 * 100) / 100;
+  const totalNum = subtotal + taxes;
+  const total = `$${totalNum.toFixed(2)}`;
+  const email = ctx.session.purchase?.purchaser?.email;
+  const uid = ctx.from?.id ?? 0;
 
-  emitEvent({ type: "payment_attempt", userId: ctx.from?.id ?? 0, orderId, method: methodName });
+  emitEvent({ type: "payment_attempt", userId: uid, orderId, method: methodName });
 
-  // Record order durable
   await ensureUser(ctx.from || undefined);
+
+  // Create pending order first so a failed charge is still auditable.
+  const qr = buildEsimQrPayload(orderId, plan.id);
   await store.saveOrder({
     id: orderId,
-    userId: ctx.from?.id ?? 0,
+    userId: uid,
     type: "esim",
     country: country.name,
     plan: `${plan.provider} — ${plan.data} ${plan.validity}`,
     amount: total,
-    status: "paid",
-    createdAt: new Date().toISOString(),
+    status: "pending",
+    provider: plan.provider,
+    createdAt: nowIso(),
     paymentMethod: methodName,
+    qr,
+    email,
+    expiresAt: new Date(now() + 30 * 86400000).toISOString(),
   });
 
-  emitEvent({ type: "payment_success", userId: ctx.from?.id ?? 0, orderId, amount: total });
+  const pay = await processPayment({
+    orderId,
+    amountMinor: Math.round(totalNum * 100),
+    currency: method === "upi" ? "inr" : "usd",
+    description: `eSIM ${plan.provider} ${plan.data}`,
+    email,
+    method,
+    receipt: orderId,
+  });
 
-  // Send confirmation email (best-effort, does not block flow)
-  const email = ctx.session.purchase?.purchaser?.email;
+  if (!pay.ok) {
+    await store.updateOrder(orderId, { status: "failed", paymentId: pay.paymentId });
+    emitEvent({
+      type: "payment_failure",
+      userId: uid,
+      orderId,
+      method: methodName,
+      error: pay.error ?? "unknown",
+    });
+    await safeEdit(
+      ctx,
+      "Payment didn't go through. Try again or pick a different method — we won't charge you twice.",
+      { reply_markup: errorKeyboard() },
+    );
+    return;
+  }
+
+  await store.updateOrder(orderId, {
+    status: "paid",
+    paymentId: pay.paymentId,
+    paymentMethod: `${methodName}/${pay.gateway}`,
+  });
+
+  emitEvent({ type: "payment_success", userId: uid, orderId, amount: total });
+
+  // Email QR + receipt (best-effort; chat still carries the activation string).
   if (email) {
-    sendConfirmationEmail(email, orderId, `${plan.provider} — ${plan.data}`, country.name, total).catch(() => {});
+    sendConfirmationEmail(
+      email,
+      orderId,
+      `${plan.provider} — ${plan.data}`,
+      country.name,
+      total,
+    ).catch(() => {});
   }
 
   ctx.session.step = "idle";
@@ -680,10 +717,17 @@ composer.callbackQuery(/^purchase:pay:(.+)$/, async (ctx) => {
       method: methodName,
       email: email ?? "your email",
     }),
-    {
-      reply_markup: postSuccessKeyboard(),
-    }
+    { reply_markup: postSuccessKeyboard() },
   );
+
+  // Deliver the activation QR payload in-chat so the user is not email-only.
+  try {
+    await ctx.reply(
+      `📱 Your eSIM activation code\n\n\`${qr}\`\n\nScan this with your phone's eSIM settings, or open the QR we emailed to ${email ?? "you"}.`,
+    );
+  } catch {
+    // Non-fatal — email path still covers delivery.
+  }
 });
 
 // ── Cancel ───────────────────────────────────────────────────────────────────

@@ -8,6 +8,9 @@ import {
 } from "../toolkit/index.js";
 import { recharge as copy, render } from "../i18n/en.js";
 import { store, ensureUser } from "../store.js";
+import { safeAnswer, safeEdit } from "../safe-api.js";
+import { now, nowIso } from "../clock.js";
+import { processPayment } from "../payments.js";
 
 registerMainMenuItem({ label: "📲 Recharge", data: "recharge:start", order: 20 });
 
@@ -66,24 +69,6 @@ const AMOUNTS: Record<string, string[]> = {
   JP: ["¥1000", "¥3000", "¥5000", "¥10000"],
   BR: ["R$20", "R$50", "R$100", "R$200"],
 };
-
-// ── Safe API helpers ──────────────────────────────────────────────────────────
-
-async function safeAnswer(ctx: Ctx) {
-  try {
-    await ctx.answerCallbackQuery();
-  } catch {
-    // Query too old or invalid — ignore silently.
-  }
-}
-
-async function safeEdit(ctx: Ctx, text: string, extra?: Record<string, unknown>) {
-  try {
-    await ctx.editMessageText(text, extra);
-  } catch {
-    // Message not modified or already deleted — ignore.
-  }
-}
 
 // ── Keyboard builders ─────────────────────────────────────────────────────────
 
@@ -247,19 +232,55 @@ composer.callbackQuery("recharge:pay:yes", async (ctx) => {
   const ops = OPERATORS[r.country ?? ""] ?? [];
   const op = ops.find((o) => o.id === r.operator);
 
-  // Record order durable
-  const orderId = `RCG-${Date.now().toString(36).toUpperCase()}`;
+  const orderId = `RCG-${now().toString(36).toUpperCase()}`;
+  const uid = ctx.from?.id ?? 0;
   await ensureUser(ctx.from || undefined);
+
+  // Parse major units from display amount (₹200, $10, €20 …)
+  const major = parseFloat((r.amount || "0").replace(/[^0-9.]/g, "")) || 0;
+  const currency = r.country === "IN" ? "inr" : r.country === "GB" ? "gbp" : r.country === "DE" ? "eur" : r.country === "JP" ? "jpy" : r.country === "BR" ? "brl" : "usd";
+  const method = r.country === "IN" ? "upi" as const : "card" as const;
+
   await store.saveOrder({
     id: orderId,
-    userId: ctx.from?.id ?? 0,
+    userId: uid,
     type: "recharge",
     country: country?.name ?? r.country,
     plan: `${op?.name ?? r.operator} — ${r.amount}`,
     amount: r.amount,
+    status: "pending",
+    createdAt: nowIso(),
+    paymentMethod: method,
+  });
+
+  const pay = await processPayment({
+    orderId,
+    amountMinor: currency === "jpy" ? Math.round(major) : Math.round(major * 100),
+    currency,
+    description: `Recharge ${op?.name ?? r.operator} ${r.phone}`,
+    method,
+    receipt: orderId,
+  });
+
+  if (!pay.ok) {
+    await store.updateOrder(orderId, { status: "failed", paymentId: pay.paymentId });
+    await safeEdit(
+      ctx,
+      "Recharge payment didn't go through. Tap Confirm again to retry, or cancel and start over.",
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton(copy.confirmPay, "recharge:pay:yes")],
+          [inlineButton(copy.confirmCancel, "recharge:pay:no")],
+        ]),
+      },
+    );
+    return;
+  }
+
+  await store.updateOrder(orderId, {
     status: "paid",
-    createdAt: new Date().toISOString(),
-    paymentMethod: "wallet",
+    paymentId: pay.paymentId,
+    paymentMethod: `${method}/${pay.gateway}`,
   });
 
   ctx.session.step = "idle";
@@ -272,9 +293,7 @@ composer.callbackQuery("recharge:pay:yes", async (ctx) => {
       phone: r.phone,
       operator: op?.name ?? r.operator,
     }),
-    {
-      reply_markup: supportKeyboard(),
-    }
+    { reply_markup: supportKeyboard() },
   );
 });
 

@@ -5,10 +5,10 @@ import {
   mainMenuItems,
   inlineButton,
   inlineKeyboard,
-  mainMenuKeyboard,
 } from "../toolkit/index.js";
 import { welcome } from "../i18n/en.js";
 import { store, ensureUser } from "../store.js";
+import { safeAnswer, safeEdit } from "../safe-api.js";
 
 registerMainMenuItem({ label: "💰 Wallet", data: "wallet:show", order: 40 });
 
@@ -36,26 +36,17 @@ function buildMenuKeyboard(isAdm: boolean) {
   return inlineKeyboard(rows);
 }
 
-// Tolerate "query is too old" and "message is not modified" so tapping a
-// stale button (or re-tapping the current screen) never throws into the logs.
-async function safeAnswer(ctx: Ctx) {
-  try {
-    await ctx.answerCallbackQuery();
-  } catch {
-    // Query expired / invalid — nothing to do.
-  }
-}
-
-async function safeEdit(ctx: Ctx, text: string, extra?: Record<string, unknown>) {
-  try {
-    await ctx.editMessageText(text, extra);
-  } catch {
-    // Message unchanged or already gone — ignore.
-  }
-}
-
 composer.command("start", async (ctx) => {
   await ensureUser(ctx.from || undefined);
+  // Deep-link payloads: /start <code> for referral or invite join.
+  const payload = ctx.message?.text?.split(/\s+/)[1];
+  if (payload && payload.startsWith("ref_")) {
+    const u = await ensureUser(ctx.from || undefined);
+    if (!u.referredBy && payload.slice(4)) {
+      u.referredBy = payload.slice(4);
+      await store.saveUser(u);
+    }
+  }
   const adm = await isAdmin(ctx.from?.id);
   await ctx.reply(welcome.default, { reply_markup: buildMenuKeyboard(adm) });
 });
